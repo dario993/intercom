@@ -34,6 +34,7 @@ type Session struct {
 
 type Hub struct {
 	SendUDP func(addr *net.UDPAddr, b []byte)
+	UDPPort int // port actually bound; overrides the saved setting, which applies only after restart
 
 	mu       sync.Mutex
 	store    *config.Store
@@ -112,6 +113,9 @@ func (h *Hub) Login(username, password string) (*Session, *proto.ErrorMsg) {
 	s := &Session{ID: h.newIDLocked(), UserID: u.ID, Out: make(chan any, 64), name: u.Name, lastSeen: h.now()}
 	h.applyLocked(s, w.Channels, w.Perms)
 	h.sessions[s.ID], h.byUser[u.ID] = s, s
+	if h.UDPPort != 0 {
+		w.UDPPort = h.UDPPort
+	}
 	w.Type, w.UserID, w.Session = proto.MsgWelcome, u.ID, s.ID
 	h.send(s, w)
 	h.broadcastUsersLocked()

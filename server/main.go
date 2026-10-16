@@ -2,6 +2,7 @@
 package main
 
 import (
+	"errors"
 	"flag"
 	"fmt"
 	"log"
@@ -31,17 +32,9 @@ func main() {
 	if err != nil {
 		log.Fatalf("porta UDP %d non disponibile: %v", st.UDPPort, err)
 	}
+	h.UDPPort = st.UDPPort
 	h.SendUDP = func(a *net.UDPAddr, b []byte) { udp.WriteToUDP(b, a) }
-	go func() {
-		buf := make([]byte, 1500)
-		for {
-			n, addr, err := udp.ReadFromUDP(buf)
-			if err != nil {
-				log.Fatalf("UDP: %v", err)
-			}
-			h.HandleUDP(addr, buf[:n])
-		}
-	}()
+	go func() { log.Fatalf("UDP: %v", readLoop(udp, h.HandleUDP)) }()
 	go func() {
 		for range time.Tick(2 * time.Second) {
 			h.Reap(10 * time.Second)
@@ -76,5 +69,24 @@ func printAddresses(port int) {
 		if ip, ok := a.(*net.IPNet); ok && !ip.IP.IsLoopback() && ip.IP.To4() != nil {
 			log.Printf("Pagina web: http://%s:%d", ip.IP, port)
 		}
+	}
+}
+
+// readLoop feeds datagrams to handle until the socket is closed; other read errors
+// (such as ICMP port-unreachable surfacing as ECONNRESET on Windows) are logged and skipped.
+func readLoop(r interface {
+	ReadFromUDP([]byte) (int, *net.UDPAddr, error)
+}, handle func(*net.UDPAddr, []byte)) error {
+	buf := make([]byte, 1500)
+	for {
+		n, addr, err := r.ReadFromUDP(buf)
+		if errors.Is(err, net.ErrClosed) {
+			return err
+		}
+		if err != nil {
+			log.Printf("UDP: %v", err)
+			continue
+		}
+		handle(addr, buf[:n])
 	}
 }

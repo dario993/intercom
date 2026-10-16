@@ -323,3 +323,15 @@ func TestLiveShowsWhoTalksWhere(t *testing.T) {
 		t.Errorf("bruno should be offline: %+v", live[1])
 	}
 }
+
+func TestWelcomeUsesBoundUDPPort(t *testing.T) {
+	h, _ := newHub(t)
+	h.UDPPort = 9999 // the port actually bound; the saved setting (8081) applies only after restart
+	s, e := h.Login("anna", pw)
+	if e != nil {
+		t.Fatal(e.Code)
+	}
+	if w := drain(s)[0].(proto.Welcome); w.UDPPort != 9999 {
+		t.Errorf("welcome udpPort = %d, want 9999", w.UDPPort)
+	}
+}
