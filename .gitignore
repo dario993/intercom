@@ -1,0 +1,5 @@
+.DS_Store
+.superpowers/
+server/intercom-server
+server/dist/
+server/intercom-config.json
