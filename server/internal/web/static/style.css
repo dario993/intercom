@@ -1,0 +1,34 @@
+:root { --bg: #121417; --panel: #1c2026; --line: #2c323a; --text: #e8eaed; --muted: #9aa3ad; --accent: #f5a524; --ok: #22c55e; --err: #ef4444; }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.4 system-ui, sans-serif; }
+h1 { font-size: 20px; margin: 0; }
+h2 { font-size: 18px; }
+main#auth { max-width: 360px; margin: 15vh auto; padding: 0 16px; }
+main#auth input, main#auth button { width: 100%; margin-top: 8px; }
+header { display: flex; gap: 24px; align-items: center; padding: 12px 24px; background: var(--panel); border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+nav { display: flex; gap: 4px; flex: 1; flex-wrap: wrap; }
+nav button { background: none; border: 0; color: var(--muted); }
+nav button.active { color: var(--accent); border-bottom: 2px solid var(--accent); border-radius: 0; }
+section { padding: 8px 24px 32px; max-width: 960px; }
+table { width: 100%; border-collapse: collapse; margin-top: 12px; }
+th, td { text-align: left; padding: 8px; border-bottom: 1px solid var(--line); }
+th { color: var(--muted); font-weight: 500; }
+input, button { font: inherit; color: var(--text); background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 7px 10px; }
+input[type=color] { padding: 2px; width: 44px; height: 34px; }
+input[type=checkbox] { width: 18px; height: 18px; }
+button { cursor: pointer; }
+button:hover:not(:disabled) { border-color: var(--accent); }
+button:disabled { opacity: .35; cursor: default; }
+button.link { background: none; border: 0; color: var(--muted); }
+label { display: block; margin: 10px 0; }
+label input:not([type=checkbox]) { display: block; width: 100%; margin-top: 4px; }
+label.check { display: flex; gap: 8px; align-items: center; }
+.row { display: flex; gap: 8px; align-items: center; justify-content: flex-end; }
+#channel-form { justify-content: flex-start; }
+#password-form { margin-top: 32px; }
+.dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: var(--muted); margin-right: 8px; }
+.dot.on { background: var(--ok); }
+.err { color: var(--err); min-height: 1.4em; }
+.hint { color: var(--muted); font-size: 13px; }
+dialog { background: var(--panel); color: var(--text); border: 1px solid var(--line); border-radius: 10px; width: min(640px, 94vw); }
+dialog::backdrop { background: rgba(0, 0, 0, .6); }

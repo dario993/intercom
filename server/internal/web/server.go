@@ -2,9 +2,11 @@
 package web
 
 import (
+	"embed"
 	"encoding/json"
 	"errors"
 	"io"
+	"io/fs"
 	"net/http"
 	"strconv"
 	"sync"
@@ -12,6 +14,9 @@ import (
 	"intercom/internal/config"
 	"intercom/internal/hub"
 )
+
+//go:embed static
+var staticFiles embed.FS
 
 type Server struct {
 	Store      *config.Store
@@ -28,6 +33,8 @@ func New(store *config.Store, h *hub.Hub) *Server {
 
 func (s *Server) Handler() http.Handler {
 	mux := http.NewServeMux()
+	static, _ := fs.Sub(staticFiles, "static")
+	mux.Handle("GET /", http.FileServerFS(static))
 	mux.HandleFunc("GET /ws", s.handleWS)
 	mux.HandleFunc("GET /api/status", s.status)
 	mux.HandleFunc("POST /api/setup", s.setup)

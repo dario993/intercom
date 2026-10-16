@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Intercom Server</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<main id="auth" hidden>
+  <h1>Intercom Server</h1>
+  <form id="auth-form">
+    <p id="auth-hint"></p>
+    <input type="password" id="auth-pass" placeholder="Password amministratore" required minlength="4">
+    <button>Entra</button>
+    <p class="err" id="auth-err"></p>
+  </form>
+</main>
+
+<div id="app" hidden>
+  <header>
+    <h1>Intercom Server</h1>
+    <nav>
+      <button data-tab="overview">Panoramica</button>
+      <button data-tab="channels">Canali</button>
+      <button data-tab="users">Utenti</button>
+      <button data-tab="settings">Impostazioni</button>
+    </nav>
+    <button id="logout" class="link">Esci</button>
+  </header>
+
+  <section id="tab-overview">
+    <h2>Utenti</h2>
+    <table>
+      <thead><tr><th>Utente</th><th>Stato</th><th>Sta parlando</th><th></th></tr></thead>
+      <tbody id="live"></tbody>
+    </table>
+  </section>
+
+  <section id="tab-channels" hidden>
+    <h2>Canali</h2>
+    <form id="channel-form" class="row">
+      <input id="ch-name" placeholder="Nome canale" required>
+      <input id="ch-color" type="color" value="#3b82f6">
+      <button>Aggiungi</button>
+    </form>
+    <table><tbody id="channels"></tbody></table>
+  </section>
+
+  <section id="tab-users" hidden>
+    <h2>Utenti</h2>
+    <button id="user-new">Nuovo utente</button>
+    <table><tbody id="users"></tbody></table>
+    <dialog id="user-dialog">
+      <form id="user-form">
+        <h3 id="user-title"></h3>
+        <label>Nome <input id="u-name" required></label>
+        <label>Password <input id="u-pass" type="password" autocomplete="new-password"></label>
+        <label class="check"><input id="u-enabled" type="checkbox"> Abilitato</label>
+        <label class="check"><input id="u-allcall" type="checkbox"> Chiamata a tutti</label>
+        <label class="check"><input id="u-private" type="checkbox"> Chiamate private</label>
+        <h4>Canali</h4>
+        <table>
+          <thead><tr><th>Canale</th><th>Assegnato</th><th>Parla</th><th>Ascolta</th><th>Ordine</th></tr></thead>
+          <tbody id="u-channels"></tbody>
+        </table>
+        <p class="err" id="user-err"></p>
+        <div class="row">
+          <button type="button" id="user-cancel">Annulla</button>
+          <button>Salva</button>
+        </div>
+      </form>
+    </dialog>
+  </section>
+
+  <section id="tab-settings" hidden>
+    <h2>Impostazioni</h2>
+    <form id="settings-form">
+      <label>Nome server <input id="s-name" required></label>
+      <label>Porta HTTP <input id="s-http" type="number" min="1" max="65535" required></label>
+      <label>Porta UDP audio <input id="s-udp" type="number" min="1" max="65535" required></label>
+      <p class="hint">Le porte cambiano al prossimo riavvio del server.</p>
+      <button>Salva</button> <span id="s-msg"></span>
+    </form>
+    <form id="password-form">
+      <h3>Password amministratore</h3>
+      <input id="p-new" type="password" minlength="4" required autocomplete="new-password">
+      <button>Cambia password</button> <span id="p-msg"></span>
+    </form>
+  </section>
+</div>
+<script src="app.js"></script>
+</body>
+</html>

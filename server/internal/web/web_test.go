@@ -208,3 +208,16 @@ func TestWebSocketLogin(t *testing.T) {
 		t.Errorf("error = %+v, err %v", e, err)
 	}
 }
+
+func TestServesAdminPage(t *testing.T) {
+	srv, _, _ := adminServer(t)
+	for _, path := range []string{"/", "/app.js", "/style.css"} {
+		code, body := call(t, &http.Client{}, srv, "GET", path, nil)
+		if code != 200 || body == "" {
+			t.Errorf("GET %s = %d", path, code)
+		}
+	}
+	if _, body := call(t, &http.Client{}, srv, "GET", "/", nil); !strings.Contains(body, "Intercom Server") {
+		t.Errorf("index.html missing title")
+	}
+}
