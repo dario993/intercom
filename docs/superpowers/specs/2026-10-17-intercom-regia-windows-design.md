@@ -139,6 +139,20 @@ Finestra pensata per un monitor 16:9 dedicato.
 2. **Concentus**: compatibilità con l'Opus di `MediaCodec` Android in entrambe le direzioni, e costo in CPU.
 3. **Build per Windows dal Mac**: verificare presto che lo zip prodotto sul Mac si avvii davvero su Windows.
 
+### Esito delle prove (2026-10-17, VM Parallels Windows 11 ARM64, JDK Temurin 17 x64 in emulazione)
+
+Prototipo: `cd desktop && gradlew runProbe --args="--bench | --loop | --net HOST PORT USER PASS --tone --cycle 120"`.
+
+- **Concentus ↔ Android: OK in entrambe le direzioni.** PC → telefono: tono a 440 Hz sentito pulito sul telefono.
+  Telefono → PC: 3303 pacchetti Opus di `MediaCodec` ricevuti, tutti decodificati, nessuno rifiutato.
+- **CPU di Concentus: OK.** A regime ~1,2 ms per codificare e ~0,3 ms per decodificare un frame da 20 ms,
+  anche con la JVM x64 emulata su ARM.
+- **Riscaldamento della JVM:** nella VM servono ~25 s prima che la catena regga il tempo reale; nel frattempo si perde
+  audio. Il motore audio dovrà scaldare Opus all'avvio (frame di silenzio in background) prima di aprire le linee.
+  Da rimisurare sul PC della regia (x64 nativo).
+- **Ritardo:** stima software nella VM ~95–110 ms (buffer delle linee Java Sound 40–60 ms). **Non attendibile**:
+  la misura bocca-orecchio vera resta da fare sul PC della regia con lo zip del Task 8.
+
 ## Lasciato al costruttore
 
 - Struttura Gradle: come organizzare modulo condiviso, app Android e app desktop (una build unica o più build),

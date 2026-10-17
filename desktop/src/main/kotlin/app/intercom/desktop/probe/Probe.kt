@@ -24,12 +24,15 @@ import javax.sound.sampled.TargetDataLine
 import kotlin.concurrent.thread
 import kotlin.math.PI
 import kotlin.math.sin
+import kotlin.system.exitProcess
 
 /*
  * Task 2 risk probe, removed once the real audio engine exists.
  *   --list                                    sound cards
  *   --loop [--seconds N]                      mic -> Opus -> Opus -> headphones, prints buffering and codec cost
  *   --net HOST PORT USER PASS [--tone]        joins the server: plays what phones say, Enter toggles talking
+ *         [--cycle SECONDS]                   unattended instead: 10 s listening, 5 s on air, repeated
+ *   --bench                                   Opus CPU cost per frame
  * Common: --in NAME  --out NAME  --buf MS (Java Sound line buffer, default 40)
  */
 fun main(args: Array<String>) {
@@ -146,7 +149,10 @@ private fun net(opt: Options) {
                     conn.send(ClientMessages.state(talkChannels, listen))
                     println("Collegato a '${msg.serverName}': parla su $talkChannels, ascolta $listen. Invio = parla/smetti.")
                 }
-                is ServerMessage.Talking -> println("${msg.name} ${if (msg.active) "parla" else "ha smesso"}")
+                is ServerMessage.Talking -> println("${msg.name} ${if (msg.active) "parla" else "ha smesso"} su ${msg.target} ${msg.channelIds}")
+                is ServerMessage.Users -> println(
+                    "Utenti: " + msg.users.joinToString { "${it.name}${if (it.talking) " (parla)" else if (it.online) "" else " (offline)"}" },
+                )
                 else -> Unit
             }
         }
@@ -203,11 +209,22 @@ private fun net(opt: Options) {
         }
     }
 
-    while (true) {
-        readlnOrNull() ?: break
+    fun toggle() {
         val on = !talk.get()
         talk.set(on)
         println(if (on) ">>> IN ONDA" else "<<< fuori onda")
     }
+    val cycle = opt.value("--cycle")?.toInt() // run unattended for this many seconds: 5 s on air, 10 s off
+    if (cycle != null) {
+        val end = System.currentTimeMillis() + cycle * 1000L
+        while (System.currentTimeMillis() < end) {
+            Thread.sleep(10_000); toggle()
+            Thread.sleep(5_000); toggle()
+        }
+    } else {
+        while (readlnOrNull() != null) toggle()
+    }
+    println("Fine: ricevuti ${received.get()}, decodificati ${decoded.get()}, rifiutati ${failed.get()}")
     conn.close()
+    exitProcess(0) // OkHttp's pool threads would keep the JVM alive for another minute
 }
