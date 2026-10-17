@@ -1,12 +1,12 @@
 package app.intercom.desktop.probe
 
-import app.intercom.android.net.ConnState
-import app.intercom.android.net.Connection
-import app.intercom.android.proto.ClientMessages
-import app.intercom.android.proto.KIND_VOICE
-import app.intercom.android.proto.ServerMessage
-import app.intercom.android.proto.ServerPacket
-import app.intercom.android.proto.Target
+import app.intercom.core.net.ConnState
+import app.intercom.core.net.Connection
+import app.intercom.core.proto.ClientMessages
+import app.intercom.core.proto.KIND_VOICE
+import app.intercom.core.proto.ServerMessage
+import app.intercom.core.proto.ServerPacket
+import app.intercom.core.proto.Target
 import app.intercom.desktop.audio.FRAME_BYTES
 import app.intercom.desktop.audio.FRAME_SAMPLES
 import app.intercom.desktop.audio.OpusDecoder

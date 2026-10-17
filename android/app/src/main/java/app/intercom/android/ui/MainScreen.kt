@@ -56,9 +56,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import app.intercom.android.IntercomController
 import app.intercom.android.UiState
-import app.intercom.android.net.ConnState
-import app.intercom.android.proto.ChannelInfo
-import app.intercom.android.talk.TalkButton
+import app.intercom.core.net.ConnState
+import app.intercom.core.proto.ChannelInfo
+import app.intercom.core.talk.TalkButton
 import kotlinx.coroutines.delay
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter

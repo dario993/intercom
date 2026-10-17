@@ -93,6 +93,12 @@ Finestra pensata per un monitor 16:9 dedicato.
 - Scheda audio di **ingresso** e di **uscita**, scelte per nome tra quelle di Windows.
 - Informazioni su server e versione.
 
+### Modulo condiviso e iOS
+
+- In futuro arriverà anche l'app iPhone. L'utente ha scelto comunque un modulo condiviso **solo Kotlin/JVM**
+  (2026-10-17): la conversione in Kotlin Multiplatform (`kotlinx.serialization` al posto di `org.json`,
+  Ktor al posto di OkHttp, UDP per piattaforma) si farà quando si inizierà iOS.
+
 ### Avvio e installazione
 
 - Niente avvio automatico. Con "ricorda credenziali", l'app si collega da sola all'apertura, come Android.

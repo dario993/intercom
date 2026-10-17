@@ -11,6 +11,8 @@ Stato: **tappa 1** (nucleo server + Android) completata. Roadmap in [docs/archit
 ```
 server/    server Go: binario unico, pagina admin incorporata (embed), UDP audio, mDNS
 android/   app Kotlin + Jetpack Compose (minSdk 29)
+shared/    logica comune Kotlin/JVM (protocollo, connessione, PARLA, jitter/mixer/VOX), inclusa da android/ e desktop/
+desktop/   client Windows per la regia, Compose for Desktop (in costruzione)
 docs/      documentazione per settori (indice sotto) + specifiche e piani originali
 ```
 
@@ -23,8 +25,12 @@ cd server && go test ./...
 
 # android
 cd android && ./gradlew assembleDebug    # APK: android/app/build/outputs/apk/debug/app-debug.apk
-cd android && ./gradlew test             # test unitari JVM
+cd android && ./gradlew test             # test unitari JVM (quelli di shared/)
 adb install -r android/app/build/outputs/apk/debug/app-debug.apk
+
+# desktop (anche da Windows, senza Android SDK)
+cd desktop && ./gradlew run              # apre il client
+cd desktop && ./gradlew test             # test di shared/ e desktop/
 ```
 
 ## Documentazione
@@ -44,7 +50,7 @@ Indice: **[docs/README.md](docs/README.md)**
 - Testi visibili all'utente (UI, messaggi d'errore, log del server) in **italiano**; codice, commenti e commit in **inglese**.
 - Commit nello stile `feat(android): ...`, `fix(server): ...`, `docs: ...`.
 - Il protocollo è condiviso: se cambi un messaggio o un pacchetto, aggiorna **entrambi** i lati
-  (`server/internal/proto` e `android/.../proto`) e [docs/protocollo.md](docs/protocollo.md).
+  (`server/internal/proto` e `shared/.../core/proto`) e [docs/protocollo.md](docs/protocollo.md).
 - Le scorciatoie volute sono marcate nel codice con un commento `ponytail:` che spiega il limite.
 - Quando cambia un comportamento descritto in `docs/`, aggiorna il documento nello stesso commit.
 

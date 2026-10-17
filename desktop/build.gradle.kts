@@ -11,17 +11,6 @@ kotlin {
     jvmToolchain(17)
 }
 
-// ponytail: until Task 3 moves proto/ and net/ into shared/, the latency probe compiles a copy of the Android sources.
-val androidCore = tasks.register<Sync>("androidCore") {
-    from("../android/app/src/main/java") {
-        include("app/intercom/android/proto/**", "app/intercom/android/net/**")
-    }
-    into(layout.buildDirectory.dir("generated/androidCore"))
-}
-sourceSets.main {
-    kotlin.srcDir(androidCore)
-}
-
 dependencies {
     implementation("app.intercom:shared")
     // Windows x64 natives even when built elsewhere: the control-room PC is x64.
@@ -34,6 +23,11 @@ dependencies {
     implementation("net.java.dev.jna:jna-platform:5.19.1")
 
     testImplementation("junit:junit:4.13.2")
+}
+
+// `./gradlew test` also runs the shared module's tests.
+tasks.test {
+    dependsOn(gradle.includedBuild("shared").task(":test"))
 }
 
 compose.desktop {

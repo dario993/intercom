@@ -3,9 +3,14 @@
 Kotlin + Jetpack Compose, package `app.intercom.android`, minSdk 29 (Android 10: serve per l'encoder Opus
 di `MediaCodec`), target 36, versione `0.1.0`. Unica dipendenza di rete: OkHttp. Nessuna libreria nativa.
 
-Sorgenti in `android/app/src/main/java/app/intercom/android/`.
+Sorgenti in `android/app/src/main/java/app/intercom/android/`. La logica senza dipendenze Android
+(protocollo, connessione, gesti del PARLA, jitter buffer, mixer, VOX) è nel modulo condiviso
+`shared/` (package `app.intercom.core`), usato anche dal client desktop: `android/settings.gradle.kts`
+lo include come *composite build* (`includeBuild("../shared")`).
 
 ## File
+
+In `android/`:
 
 | File | Ruolo |
 |---|---|
@@ -16,17 +21,24 @@ Sorgenti in `android/app/src/main/java/app/intercom/android/`.
 | `Prefs.kt` | Impostazioni in `SharedPreferences`; volumi per chiave `host:utente:canale` |
 | `SecretBox.kt` | Cifra la password salvata con una chiave AES-GCM nell'Android Keystore |
 | `Discovery.kt` | Ricerca dei server via `NsdManager` (`_intercom._tcp`) |
-| `net/Connection.kt` | WebSocket + UDP, ping, keepalive, riconnessione, timeout |
-| `proto/` | Messaggi JSON (`Messages.kt`) e pacchetti UDP (`Packets.kt`) |
 | `audio/AudioEngine.kt` | Thread di cattura e di riproduzione, scelta dell'uscita audio |
 | `audio/OpusCodec.kt` | Encoder e decoder Opus tramite `MediaCodec` |
+| `ui/` | Compose: `App`, `ConnectScreen`, `MainScreen`, `SettingsScreen`, `Sheets` (mixer, utenti), `Theme` |
+
+In `shared/src/main/kotlin/app/intercom/core/`:
+
+| File | Ruolo |
+|---|---|
+| `net/Connection.kt` | WebSocket + UDP, ping, keepalive, riconnessione, timeout |
+| `proto/` | Messaggi JSON (`Messages.kt`) e pacchetti UDP (`Packets.kt`) |
 | `audio/JitterBuffer.kt` | Riordino per singola voce, avvio dopo 60 ms, frame mancante → silenzio |
 | `audio/Vox.kt` | Livello RMS in dBFS, soglia (predefinita −45 dB), tenuta di 800 ms (40 frame) |
 | `audio/Mixer.kt` | Somma delle voci con guadagno e saturazione a 16 bit |
 | `talk/TalkButton.kt` | Gesti del pulsante PARLA: pressione = HOLD, doppio tocco = LATCHED, tocco = sgancia |
 | `talk/Transmit.kt` | `chooseTarget` (cosa trasmettere a ogni frame) e `TxDecider` (quando inviare `ptt`) |
 | `talk/TalkingTracker.kt` | Chi parla su quale canale, avviso per le chiamate private in arrivo |
-| `ui/` | Compose: `App`, `ConnectScreen`, `MainScreen`, `SettingsScreen`, `Sheets` (mixer, utenti), `Theme` |
+
+`shared/` usa `org.json` solo come `compileOnly`: su Android è già nel sistema, il desktop aggiunge il jar.
 
 ## Thread
 
@@ -85,6 +97,6 @@ Così gli altri vedono "sta parlando" solo quando c'è davvero audio.
 
 ## Test
 
-- `app/src/test/` (JVM, `./gradlew test`): JitterBuffer, Mixer, Vox, Connection (con MockWebServer), Messages,
-  Packets, TalkButton, TalkingTracker, Transmit.
+- `shared/src/test/` (JVM, `./gradlew test` da `android/` li esegue tramite l'included build): JitterBuffer, Mixer,
+  Vox, Connection (con MockWebServer), Messages, Packets, TalkButton, TalkingTracker, Transmit.
 - `app/src/androidTest/` (dispositivo, `./gradlew connectedAndroidTest`): OpusCodec, SecretBox.

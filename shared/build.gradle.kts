@@ -6,8 +6,13 @@ plugins {
 group = "app.intercom"
 version = "0.1.0"
 
+// Java 17 bytecode from whatever JDK runs Gradle (Android Studio's JBR on the Mac, Temurin on Windows).
+java {
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
+}
 kotlin {
-    jvmToolchain(17)
+    compilerOptions.jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17
 }
 
 dependencies {

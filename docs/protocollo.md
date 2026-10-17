@@ -2,7 +2,7 @@
 
 È definito in due posti che devono restare allineati:
 - server: `server/internal/proto/proto.go`
-- Android: `android/app/src/main/java/app/intercom/android/proto/` (`Messages.kt` JSON, `Packets.kt` UDP)
+- client (Android e desktop): `shared/src/main/kotlin/app/intercom/core/proto/` (`Messages.kt` JSON, `Packets.kt` UDP)
 
 ## Controllo: WebSocket `ws://<host>:8080/ws`
 

@@ -15,6 +15,11 @@
   Si annuncia in rete con mDNS (`_intercom._tcp`).
 - **App Android** (`android/`): si collega via WebSocket per il controllo e via UDP per la voce.
   Codifica e decodifica Opus con `MediaCodec` e **mixa localmente** le voci che riceve.
+- **Client desktop per la regia** (`desktop/`, in costruzione): stesse funzioni dell'app Android su Windows,
+  Compose for Desktop, Opus con Concentus. Spec: `docs/superpowers/specs/2026-10-17-intercom-regia-windows-design.md`.
+- **Modulo condiviso** (`shared/`, Kotlin/JVM): protocollo, connessione, gesti del PARLA, jitter buffer, mixer e VOX,
+  usati da Android e desktop. È solo JVM: per l'app iPhone andrà convertito in Kotlin Multiplatform
+  (`org.json`, OkHttp e i socket Java non esistono su iOS).
 
 La rete locale è considerata fidata: nella tappa 1 il traffico non è cifrato.
 
@@ -58,6 +63,7 @@ Una modifica dell'admin si applica subito: i client ricevono `config` e le trasm
 | Tappa | Contenuto | Stato |
 |---|---|---|
 | 1 | Nucleo intercom: server + app Android | **fatta** |
+| — | Client desktop Windows per la regia | in corso |
 | 2 | Gruppi di canali | futura |
 | 3 | Program feed (L/R in cuffia), I/O verso la scheda audio del server (mix lato server) | futura |
 | 4 | Tally e GPIO | **esclusa** |

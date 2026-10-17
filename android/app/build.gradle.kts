@@ -35,12 +35,13 @@ dependencies {
     implementation("androidx.activity:activity-compose:1.11.0")
     implementation("androidx.lifecycle:lifecycle-runtime-compose:2.9.4")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.10.2")
-    implementation("com.squareup.okhttp3:okhttp:4.12.0")
-
-    testImplementation("junit:junit:4.13.2")
-    testImplementation("org.json:json:20240303") // real org.json on the JVM; android.jar only has stubs
-    testImplementation("com.squareup.okhttp3:mockwebserver:4.12.0")
+    implementation("app.intercom:shared") // protocol, connection, talk logic, jitter/mixer/VOX; brings OkHttp
 
     androidTestImplementation("androidx.test.ext:junit:1.3.0")
     androidTestImplementation("androidx.test:runner:1.7.0")
+}
+
+// The JVM unit tests live in shared/: `./gradlew test` runs them from here too.
+tasks.matching { it.name == "test" }.configureEach {
+    dependsOn(gradle.includedBuild("shared").task(":test"))
 }

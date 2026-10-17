@@ -30,7 +30,7 @@ e avere il canale 1 assegnato.
 ```bash
 cd android
 ./gradlew assembleDebug          # → app/build/outputs/apk/debug/app-debug.apk
-./gradlew test                   # test unitari JVM
+./gradlew test                   # test unitari JVM (sono in shared/, inclusi come composite build)
 ./gradlew connectedAndroidTest   # test su dispositivo (Opus, Keystore)
 ```
 
@@ -51,6 +51,25 @@ Senza cavo: copia l'APK sul telefono e aprilo, consentendo l'installazione da or
 - Su macOS consenti le connessioni in entrata quando il firewall lo chiede.
 - Nell'emulatore il Mac host è raggiungibile a `10.0.2.2`, ma l'audio UDP verso l'emulatore richiede un port forwarding:
   per le prove audio usa telefoni veri.
+
+## Client desktop (regia)
+
+```bash
+cd desktop
+./gradlew run                    # apre il client
+./gradlew test                   # test di shared/ e desktop/
+./gradlew runProbe --args="--list"   # prototipo audio: schede, --loop, --bench, --net HOST PORT USER PASS
+```
+
+Non serve l'Android SDK: `desktop/` include solo `shared/`.
+
+### Sviluppo da Windows (VM Parallels)
+
+- Strumenti: `winget install EclipseAdoptium.Temurin.17.JDK GoLang.Go`.
+- Lancia Gradle dall'unità `Y:\` (`\\Mac\Home`), non dal percorso `\\Mac\...`: `cmd` non accetta percorsi UNC come cartella corrente.
+- Git rifiuta la cartella condivisa ("dubious ownership"): `git config --global --add safe.directory '%(prefix)///Mac/Home/Documents/APP/Intercom'`.
+- La VM è sulla rete interna di Parallels (`10.211.55.x`): il server sul Mac si raggiunge a `10.211.55.2`,
+  mentre i telefoni non raggiungono un server avviato nella VM.
 
 ## Problemi comuni
 

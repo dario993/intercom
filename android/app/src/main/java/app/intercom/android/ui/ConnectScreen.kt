@@ -32,7 +32,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import app.intercom.android.FoundServer
 import app.intercom.android.UiState
-import app.intercom.android.net.ConnState
+import app.intercom.core.net.ConnState
 
 @Composable
 fun ConnectScreen(

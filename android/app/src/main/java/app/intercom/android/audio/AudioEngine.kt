@@ -16,8 +16,11 @@ import android.os.Process
 import android.os.SystemClock
 import app.intercom.android.OUTPUT_AUTO
 import app.intercom.android.OUTPUT_SPEAKER
-import app.intercom.android.proto.KIND_VOICE
-import app.intercom.android.proto.ServerPacket
+import app.intercom.core.audio.JitterBuffer
+import app.intercom.core.audio.Vox
+import app.intercom.core.audio.mix
+import app.intercom.core.proto.KIND_VOICE
+import app.intercom.core.proto.ServerPacket
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.concurrent.thread
 
