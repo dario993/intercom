@@ -82,7 +82,7 @@ fun MainScreen(s: UiState, c: IntercomController, onOpenAppSettings: () -> Unit)
             }
         }
         LazyVerticalGrid(
-            columns = GridCells.Fixed(2),
+            columns = GridCells.Fixed(1),
             modifier = Modifier.weight(1f).padding(horizontal = 12.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp),
             horizontalArrangement = Arrangement.spacedBy(10.dp),
@@ -152,21 +152,20 @@ private fun ChannelCard(
         color = MaterialTheme.colorScheme.surface,
         border = BorderStroke(if (live) 2.dp else 1.dp, if (live) color else MaterialTheme.colorScheme.surfaceVariant),
     ) {
-        Column(Modifier.padding(12.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Box(Modifier.size(10.dp).background(color, CircleShape))
-                Spacer(Modifier.width(8.dp))
-                Text(ch.name, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            Column(Modifier.weight(1f)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Box(Modifier.size(10.dp).background(color, CircleShape))
+                    Spacer(Modifier.width(8.dp))
+                    Text(ch.name, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                }
+                Text(
+                    if (live) "▶ " + speakers.joinToString() else " ",
+                    style = MaterialTheme.typography.bodySmall, color = color, maxLines = 1, overflow = TextOverflow.Ellipsis,
+                )
             }
-            Text(
-                if (live) "▶ " + speakers.joinToString() else " ",
-                style = MaterialTheme.typography.bodySmall, color = color, maxLines = 1, overflow = TextOverflow.Ellipsis,
-            )
-            Spacer(Modifier.height(8.dp))
-            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                Toggle("PARLA", talk, Amber, enabled && ch.canTalk, onTalk, Modifier.weight(1f))
-                Toggle("ASCOLTA", listen, ListenTeal, enabled && ch.canListen, onListen, Modifier.weight(1f))
-            }
+            Toggle("PARLA", talk, Amber, enabled && ch.canTalk, onTalk, Modifier.width(88.dp))
+            Toggle("ASCOLTA", listen, ListenTeal, enabled && ch.canListen, onListen, Modifier.width(88.dp))
         }
     }
 }

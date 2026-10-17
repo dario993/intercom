@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
@@ -25,6 +26,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.font.FontWeight
@@ -71,7 +73,7 @@ fun UsersSheet(s: UiState, c: IntercomController, onDismiss: () -> Unit) {
             Text("Utenti", Modifier.padding(horizontal = 20.dp), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
             if (s.perms.privateCall) {
                 Text(
-                    "Tieni premuto su un utente per parlargli in privato",
+                    "Tieni premuto PARLA per parlare solo a quell'utente",
                     Modifier.padding(horizontal = 20.dp, vertical = 4.dp), style = MaterialTheme.typography.bodySmall, color = Muted,
                 )
             }
@@ -80,21 +82,7 @@ fun UsersSheet(s: UiState, c: IntercomController, onDismiss: () -> Unit) {
                     val canCall = s.perms.privateCall && u.online && s.micAllowed
                     val calling = s.holdingUser == u.id
                     Row(
-                        Modifier.fillMaxWidth()
-                            .background(if (calling) OnAirRed else Color.Transparent)
-                            .pointerInput(canCall, u.id) {
-                                if (!canCall) return@pointerInput
-                                awaitEachGesture {
-                                    awaitFirstDown()
-                                    c.privateCall(u.id, true)
-                                    try {
-                                        waitForUpOrCancellation()
-                                    } finally { // sheet dismissed mid-press: end the call
-                                        c.privateCall(u.id, false)
-                                    }
-                                }
-                            }
-                            .padding(horizontal = 20.dp, vertical = 16.dp),
+                        Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 10.dp),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         val dot = when {
@@ -104,16 +92,44 @@ fun UsersSheet(s: UiState, c: IntercomController, onDismiss: () -> Unit) {
                         }
                         Box(Modifier.size(10.dp).background(dot, CircleShape))
                         Spacer(Modifier.width(12.dp))
-                        Text(u.name, Modifier.weight(1f), fontWeight = FontWeight.Bold)
-                        Text(
-                            when {
-                                calling -> "in onda"
-                                u.talking -> "sta parlando"
-                                u.online -> "online"
-                                else -> "offline"
-                            },
-                            color = if (calling) Color.Black else Muted,
-                        )
+                        Column(Modifier.weight(1f)) {
+                            Text(u.name, fontWeight = FontWeight.Bold)
+                            Text(
+                                when {
+                                    calling -> "in onda"
+                                    u.talking -> "sta parlando"
+                                    u.online -> "online"
+                                    else -> "offline"
+                                },
+                                style = MaterialTheme.typography.bodySmall, color = if (calling) OnAirRed else Muted,
+                            )
+                        }
+                        if (s.perms.privateCall) {
+                            val fg = when {
+                                calling -> Color.Black
+                                canCall -> MaterialTheme.colorScheme.onSurface
+                                else -> MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f)
+                            }
+                            Box(
+                                Modifier.width(88.dp).height(40.dp).clip(RoundedCornerShape(8.dp))
+                                    .background(if (calling) OnAirRed else MaterialTheme.colorScheme.surfaceVariant)
+                                    .pointerInput(canCall, u.id) {
+                                        if (!canCall) return@pointerInput
+                                        awaitEachGesture {
+                                            awaitFirstDown()
+                                            c.privateCall(u.id, true)
+                                            try {
+                                                waitForUpOrCancellation()
+                                            } finally { // sheet dismissed mid-press: end the call
+                                                c.privateCall(u.id, false)
+                                            }
+                                        }
+                                    },
+                                contentAlignment = Alignment.Center,
+                            ) {
+                                Text("PARLA", color = fg, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
+                            }
+                        }
                     }
                 }
             }
