@@ -210,8 +210,11 @@ private fun TalkButtonView(s: UiState, onDown: () -> Unit, onUp: () -> Unit) {
                 awaitEachGesture {
                     awaitFirstDown()
                     onDown()
-                    waitForUpOrCancellation()
-                    onUp()
+                    try {
+                        waitForUpOrCancellation()
+                    } finally { // also when the button leaves the screen mid-press: never leave the mic on
+                        onUp()
+                    }
                 }
             },
         contentAlignment = Alignment.Center,
@@ -274,8 +277,11 @@ private fun HoldIcon(icon: ImageVector, label: String, active: Boolean, enabled:
                 awaitEachGesture {
                     awaitFirstDown()
                     onPress(true)
-                    waitForUpOrCancellation()
-                    onPress(false)
+                    try {
+                        waitForUpOrCancellation()
+                    } finally {
+                        onPress(false)
+                    }
                 }
             }
             .padding(horizontal = 10.dp, vertical = 6.dp),

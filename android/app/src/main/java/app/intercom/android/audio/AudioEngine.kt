@@ -31,6 +31,8 @@ class AudioEngine(
     private val onFrame: (voiceDetected: Boolean) -> Boolean,
     private val sendVoice: (ByteArray) -> Unit,
     private val gain: (channelId: Int) -> Float,
+    /** The mic stopped on its own (recorder died or could not start); called once, on the capture thread. */
+    private val onCaptureLost: () -> Unit = {},
 ) {
     val vox = Vox()
     private val am = context.getSystemService(AudioManager::class.java)
@@ -154,8 +156,18 @@ class AudioEngine(
         }
     }
 
-    @SuppressLint("MissingPermission") // only started when RECORD_AUDIO is granted
     private fun captureLoop() {
+        try {
+            captureFrames()
+        } catch (e: Exception) { // e.g. AudioRecord refused to start: must not crash the app
+            android.util.Log.w("AudioEngine", "capture failed", e)
+        } finally {
+            if (running) onCaptureLost()
+        }
+    }
+
+    @SuppressLint("MissingPermission") // only started when RECORD_AUDIO is granted
+    private fun captureFrames() {
         Process.setThreadPriority(Process.THREAD_PRIORITY_URGENT_AUDIO)
         val min = AudioRecord.getMinBufferSize(SAMPLE_RATE, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT)
         val rec = AudioRecord.Builder()
@@ -185,7 +197,7 @@ class AudioEngine(
                 if (onFrame(vox.process(frame))) encoder.encode(frame).forEach(sendVoice)
             }
         } finally {
-            rec.stop()
+            runCatching { rec.stop() }
             rec.release()
             encoder.close()
         }

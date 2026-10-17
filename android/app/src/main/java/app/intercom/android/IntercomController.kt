@@ -220,7 +220,7 @@ class IntercomController(private val app: Context) {
         val mic = micGranted()
         update { it.copy(micAllowed = mic) }
         ContextCompat.startForegroundService(app, Intent(app, IntercomService::class.java))
-        engine = AudioEngine(app, capture = mic, onFrame = ::onFrame, sendVoice = { conn?.sendVoice(it) }, gain = ::gainFor).also {
+        engine = AudioEngine(app, capture = mic, onFrame = ::onFrame, sendVoice = { conn?.sendVoice(it) }, gain = ::gainFor, onCaptureLost = ::onCaptureLost).also {
             it.vox.thresholdDb = prefs.voxThresholdDb
             it.start()
             it.applyOutput(prefs.output)
@@ -249,6 +249,13 @@ class IntercomController(private val app: Context) {
         val onAir = target != null
         if (onAir != s.onAir) update { it.copy(onAir = onAir) }
         return onAir
+    }
+
+    /** Capture thread died: tell the server we stopped and fall back to listen-only (onResume retries the mic). */
+    private fun onCaptureLost() {
+        val stops = synchronized(lock) { tx.update(null) }
+        for ((active, t) in stops) conn?.send(ClientMessages.ptt(active, t))
+        main.post { update { it.copy(micAllowed = false, onAir = false) } }
     }
 
     private fun gainFor(channelId: Int): Float {

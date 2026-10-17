@@ -87,8 +87,11 @@ fun UsersSheet(s: UiState, c: IntercomController, onDismiss: () -> Unit) {
                                 awaitEachGesture {
                                     awaitFirstDown()
                                     c.privateCall(u.id, true)
-                                    waitForUpOrCancellation()
-                                    c.privateCall(u.id, false)
+                                    try {
+                                        waitForUpOrCancellation()
+                                    } finally { // sheet dismissed mid-press: end the call
+                                        c.privateCall(u.id, false)
+                                    }
                                 }
                             }
                             .padding(horizontal = 20.dp, vertical = 16.dp),
