@@ -119,6 +119,18 @@ class ConnectionTest {
     }
 
     @Test
+    fun silentServerIsTreatedAsLost() {
+        server.enqueue(upgrade({ welcome })) // never answers ping: like walking out of Wi-Fi range
+        server.start()
+        val rec = Recorder()
+        conn = Connection("127.0.0.1", server.port, "anna", "pw", "test", rec, silenceMs = 1500).also { it.start() }
+
+        assertEquals(ConnState.Connecting, rec.states.poll(3, SECONDS))
+        assertEquals(ConnState.Online, rec.states.poll(3, SECONDS))
+        assertEquals(ConnState.Reconnecting(1), rec.states.poll(6, SECONDS))
+    }
+
+    @Test
     fun kickIsFinal() {
         server.enqueue(upgrade({ welcome }))
         server.start()

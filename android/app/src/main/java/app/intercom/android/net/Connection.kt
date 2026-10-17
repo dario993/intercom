@@ -53,6 +53,8 @@ class Connection(
     private val password: String,
     private val device: String,
     private val listener: Listener,
+    /** No message from the server for this long while logged in = link lost (the server pongs every ping). */
+    private val silenceMs: Long = 10_000,
 ) {
     interface Listener {
         fun onState(state: ConnState)
@@ -71,11 +73,12 @@ class Connection(
     @Volatile private var closed = false
     @Volatile private var everOnline = false
     @Volatile private var generation = 0
+    @Volatile private var lastRxAt = 0L
     private var attempt = 0
 
     fun start() {
         listener.onState(ConnState.Connecting)
-        timer.scheduleWithFixedDelay({ send(ClientMessages.ping()) }, 3, 3, TimeUnit.SECONDS)
+        timer.scheduleWithFixedDelay({ checkSilence(); send(ClientMessages.ping()) }, 3, 3, TimeUnit.SECONDS)
         timer.scheduleWithFixedDelay({ sendUdp(KIND_KEEPALIVE, ByteArray(0)) }, 5, 5, TimeUnit.SECONDS)
         connect()
     }
@@ -121,6 +124,7 @@ class Connection(
     }
 
     private fun handle(text: String) {
+        lastRxAt = System.nanoTime()
         when (val msg = parseServerMessage(text) ?: return) {
             is ServerMessage.Welcome -> {
                 session = msg.session
@@ -168,6 +172,14 @@ class Connection(
         } catch (e: IOException) {
             // network down: the reconnect logic will notice on the WebSocket side
         }
+    }
+
+    /** A dead Wi-Fi link often gives no socket error for minutes: notice it from the missing pongs. */
+    private fun checkSilence() {
+        if (session == 0L || (System.nanoTime() - lastRxAt) / 1_000_000 <= silenceMs) return
+        val gen = generation
+        ws?.cancel()
+        lost(gen)
     }
 
     @Synchronized
