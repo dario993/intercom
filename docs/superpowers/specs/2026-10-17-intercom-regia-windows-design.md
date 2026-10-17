@@ -1,7 +1,7 @@
 # Intercom — Client desktop per la regia (Windows)
 
 Data: 2026-10-17
-Stato: in revisione
+Stato: approvato (2026-10-17)
 
 ## Perché
 
@@ -151,14 +151,13 @@ Finestra pensata per un monitor 16:9 dedicato.
 
 ## Dove eravamo rimasti (2026-10-17)
 
-- Documento scritto e letto dal revisore; **non ancora approvato dall'utente**. Prossimo passo: farglielo approvare,
-  poi il piano (superpowers:writing-plans).
-- L'utente riprende il lavoro **da un PC Windows con Claude Code**: le verifiche su Windows (ritardo audio,
-  Concentus ↔ Android, avvio dello zip) si possono fare direttamente lì, quindi il prototipo dei rischi può
-  girare in locale invece di passare per uno zip copiato.
-- Domande ancora aperte per l'utente: versione di Windows (si assume 10/11 x64) e se può accettare il messaggio
-  del firewall di Windows al primo avvio (senza, la ricerca mDNS non funziona ma `localhost` sì).
-- Le scelte in "Cosa ho deciso io" vanno mostrate all'utente al momento dell'approvazione.
+- **Approvato dall'utente** il 2026-10-17, comprese le scelte in "Cosa ho deciso io". Prossimo passo: il piano.
+- PC della regia: Windows 10/11 **x64**. Il messaggio del firewall al primo avvio si può accettare (mDNS funziona).
+- Il PC Windows da cui si sviluppa è una **macchina virtuale Parallels ARM64** sul Mac, non il PC della regia,
+  e non ha Java né Go. Su scelta dell'utente il prototipo dei rischi gira lì: serve a verificare che l'app parta
+  e che Concentus sia compatibile con Android, ma **il ritardo misurato nella VM non è attendibile**
+  (audio virtualizzato). La misura vera del ritardo resta da fare sul PC della regia.
+- Lo zip deve includere un JRE **Windows x64**, anche se la VM di sviluppo è ARM64.
 
 ## Documentazione da aggiornare
 
