@@ -3,3 +3,10 @@
 server/intercom-server
 server/dist/
 server/intercom-config.json
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+android/.idea/
+android/.kotlin/
+*.iml
