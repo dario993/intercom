@@ -4,7 +4,7 @@ Sistema intercom proprietario per rete locale (stile Unity Intercom, ma codice e
 Un **server Go** instrada la voce; i **telefoni Android** parlano e ascoltano su canali, con chiamata a tutti,
 chiamate private, VOX, mixer e lucchetto.
 
-Stato: **tappa 1** (nucleo server + Android) completata sul ramo `tappa1-android`. Roadmap in [docs/architettura.md](docs/architettura.md#roadmap).
+Stato: **tappa 1** (nucleo server + Android) completata. Roadmap in [docs/architettura.md](docs/architettura.md#roadmap).
 
 ## Struttura
 
@@ -47,3 +47,7 @@ Indice: **[docs/README.md](docs/README.md)**
   (`server/internal/proto` e `android/.../proto`) e [docs/protocollo.md](docs/protocollo.md).
 - Le scorciatoie volute sono marcate nel codice con un commento `ponytail:` che spiega il limite.
 - Quando cambia un comportamento descritto in `docs/`, aggiorna il documento nello stesso commit.
+
+## Git
+
+- Si lavora direttamente su `main`, senza rami di funzionalità. Remoto: https://github.com/dario993/intercom

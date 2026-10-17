@@ -57,7 +57,7 @@ Una modifica dell'admin si applica subito: i client ricevono `config` e le trasm
 
 | Tappa | Contenuto | Stato |
 |---|---|---|
-| 1 | Nucleo intercom: server + app Android | **fatta** (ramo `tappa1-android`) |
+| 1 | Nucleo intercom: server + app Android | **fatta** |
 | 2 | Gruppi di canali | futura |
 | 3 | Program feed (L/R in cuffia), I/O verso la scheda audio del server (mix lato server) | futura |
 | 4 | Tally e GPIO | **esclusa** |
