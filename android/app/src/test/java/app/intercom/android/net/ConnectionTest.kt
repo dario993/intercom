@@ -119,6 +119,18 @@ class ConnectionTest {
     }
 
     @Test
+    fun handshakeThatNeverAnswersFails() {
+        server.enqueue(MockResponse().setSocketPolicy(okhttp3.mockwebserver.SocketPolicy.NO_RESPONSE)) // wrong port: TCP accepts, nothing answers
+        server.start()
+        val rec = Recorder()
+        conn = Connection("127.0.0.1", server.port, "anna", "pw", "test", rec, handshakeMs = 1500).also { it.start() }
+
+        assertEquals(ConnState.Connecting, rec.states.poll(3, SECONDS))
+        val failed = rec.states.poll(5, SECONDS) as ConnState.Failed
+        assertTrue(failed.message, failed.message.contains("non risponde"))
+    }
+
+    @Test
     fun silentServerIsTreatedAsLost() {
         server.enqueue(upgrade({ welcome })) // never answers ping: like walking out of Wi-Fi range
         server.start()

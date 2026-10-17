@@ -27,7 +27,7 @@ fun App(
     SideEffect { view.keepScreenOn = s.keepScreenOn && s.screen != Screen.CONNECT }
     Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
         when (s.screen) {
-            Screen.CONNECT -> ConnectScreen(s, found, onConnect)
+            Screen.CONNECT -> ConnectScreen(s, found, onConnect, onCancel = c::logout)
             Screen.MAIN -> MainScreen(s, c, onOpenAppSettings)
             Screen.SETTINGS -> SettingsScreen(s, c)
         }

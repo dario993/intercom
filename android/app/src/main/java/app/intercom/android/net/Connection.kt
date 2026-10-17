@@ -55,6 +55,8 @@ class Connection(
     private val listener: Listener,
     /** No message from the server for this long while logged in = link lost (the server pongs every ping). */
     private val silenceMs: Long = 10_000,
+    /** Connected but no welcome after this long (wrong port, stuck server) = attempt failed. */
+    private val handshakeMs: Long = 10_000,
 ) {
     interface Listener {
         fun onState(state: ConnState)
@@ -121,6 +123,13 @@ class Connection(
 
             override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) = lost(gen)
         })
+        val socket = ws
+        timer.schedule({
+            if (gen == generation && session == 0L) {
+                lost(gen, "Il server non risponde")
+                socket?.cancel()
+            }
+        }, handshakeMs, TimeUnit.MILLISECONDS)
     }
 
     private fun handle(text: String) {
@@ -183,13 +192,13 @@ class Connection(
     }
 
     @Synchronized
-    private fun lost(gen: Int) {
+    private fun lost(gen: Int, why: String = "Server non raggiungibile") {
         if (closed || gen != generation) return
         generation++ // ignore further callbacks from this socket
         session = 0
         udp?.close()
         udp = null
-        if (!everOnline) return fail("Server non raggiungibile ($host:$port)", clearPassword = false)
+        if (!everOnline) return fail("$why ($host:$port)", clearPassword = false)
         attempt++
         listener.onState(ConnState.Reconnecting(attempt))
         timer.schedule({ connect() }, backoffMs(attempt - 1), TimeUnit.MILLISECONDS)

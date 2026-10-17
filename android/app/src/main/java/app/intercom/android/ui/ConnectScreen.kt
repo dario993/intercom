@@ -15,6 +15,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -38,6 +39,7 @@ fun ConnectScreen(
     s: UiState,
     servers: List<FoundServer>,
     onConnect: (host: String, port: Int, user: String, pass: String, remember: Boolean) -> Unit,
+    onCancel: () -> Unit,
 ) {
     var host by rememberSaveable { mutableStateOf(s.host) }
     var port by rememberSaveable { mutableStateOf(s.port.toString()) }
@@ -83,6 +85,11 @@ fun ConnectScreen(
             modifier = Modifier.fillMaxWidth().height(56.dp),
         ) {
             Text(if (connecting) "Connessione…" else "Connetti", fontWeight = FontWeight.Bold)
+        }
+        if (connecting) {
+            OutlinedButton(onClick = onCancel, modifier = Modifier.fillMaxWidth().height(56.dp)) {
+                Text("Annulla", fontWeight = FontWeight.Bold)
+            }
         }
     }
 }
