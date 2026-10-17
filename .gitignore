@@ -10,3 +10,9 @@ android/local.properties
 android/.idea/
 android/.kotlin/
 *.iml
+shared/.gradle/
+shared/build/
+shared/.kotlin/
+desktop/.gradle/
+desktop/build/
+desktop/.kotlin/
