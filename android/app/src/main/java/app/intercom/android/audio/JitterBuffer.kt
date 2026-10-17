@@ -29,6 +29,10 @@ class JitterBuffer(private val prebuffer: Int = 3, private val maxQueued: Int = 
             if (frames.size < prebuffer) return null
             playing = true
         }
+        if (frames.isEmpty()) { // talker paused (its seq stops while off air): re-anchor and prebuffer on the next packet
+            playing = false
+            return null
+        }
         val f = frames.remove(next)
         next = (next + 1) and 0xFFFF
         return f

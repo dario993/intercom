@@ -63,6 +63,16 @@ class JitterBufferTest {
     }
 
     @Test
+    fun resumesAfterTalkerPause() {
+        val jb = JitterBuffer(prebuffer = 3)
+        jb.add(0, 1, 2)
+        repeat(3) { jb.next() }
+        repeat(15) { assertNull(jb.poll()) } // 300 ms off air: the sender's seq does not advance
+        jb.add(3, 4, 5)
+        assertEquals(listOf(3, 4, 5), List(3) { jb.next() })
+    }
+
+    @Test
     fun seqDiffHandlesWrap() {
         assertEquals(1, seqDiff(0, 65535))
         assertEquals(-1, seqDiff(65535, 0))
