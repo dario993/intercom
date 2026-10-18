@@ -11,6 +11,7 @@ import (
 
 	"intercom/internal/config"
 	"intercom/internal/proto"
+	"intercom/internal/tally"
 )
 
 // Session is one logged-in client. Out carries proto messages for its WebSocket
@@ -30,6 +31,7 @@ type Session struct {
 	target   proto.Target
 	lastSeen time.Time
 	closed   bool
+	tally    proto.Tally // last tally sent
 }
 
 type Hub struct {
@@ -41,6 +43,7 @@ type Hub struct {
 	now      func() time.Time
 	sessions map[uint32]*Session
 	byUser   map[uint16]*Session
+	tally    tally.Snapshot
 }
 
 func New(store *config.Store) *Hub {
@@ -118,6 +121,7 @@ func (h *Hub) Login(username, password string) (*Session, *proto.ErrorMsg) {
 	}
 	w.Type, w.UserID, w.Session = proto.MsgWelcome, u.ID, s.ID
 	h.send(s, w)
+	h.store.View(func(c *config.Config) { h.sendTallyLocked(c, s) })
 	h.broadcastUsersLocked()
 	return s, nil
 }
@@ -217,12 +221,40 @@ func (h *Hub) ConfigChanged() {
 			infos, perms := userView(c, u)
 			h.applyLocked(s, infos, perms)
 			h.send(s, proto.ConfigMsg{Type: proto.MsgConfig, Channels: infos, Perms: perms})
+			h.sendTallyLocked(c, s)
 		}
 	})
 	for _, s := range h.sessions {
 		h.stopIfNotAllowedLocked(s)
 	}
 	h.broadcastUsersLocked()
+}
+
+// SetTally stores the latest switcher state and updates every client whose banner changed.
+func (h *Hub) SetTally(snap tally.Snapshot) {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+	h.tally = snap
+	h.store.View(func(c *config.Config) {
+		for _, s := range h.sessions {
+			h.sendTallyLocked(c, s)
+		}
+	})
+}
+
+func (h *Hub) Tally() tally.Snapshot {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+	return h.tally
+}
+
+// sendTallyLocked sends s its tally banner if it differs from the last one sent.
+func (h *Hub) sendTallyLocked(c *config.Config, s *Session) {
+	t := tally.ForUser(h.tally, c.Settings.Tally.Enabled, c.Users, s.UserID)
+	if t != s.tally {
+		s.tally = t
+		h.send(s, t)
+	}
 }
 
 func (h *Hub) Kick(userID uint16, reason string) {

@@ -28,11 +28,15 @@ Messaggi JSON `{ "type": ..., ... }`.
 | `kicked` | `reason`: `replaced` \| `admin` \| `disabled` | poi il server chiude |
 | `error` | `code`: `bad_credentials` \| `disabled`, `message` | poi il server chiude |
 | `pong` | — | risposta a `ping` |
+| `tally` | `state`, `text` | fascia tally già calcolata per questo utente: dopo `welcome` e a ogni cambiamento |
 
 - `channels` = `[{id, name, color, canTalk, canListen}]` nell'ordine assegnato all'utente.
 - `perms` = `{allCall, privateCall}`.
 - **Login duplicato**: vince l'ultimo; la sessione precedente riceve `kicked{reason:"replaced"}`.
-- **Timeout**: il server chiude una sessione senza ping né pacchetti da più di 10 s (controllo ogni 2 s).
+- `tally.state`: `off` (nessuna fascia: tally disattivato o nessun ingresso assegnato), `program`, `preview`,
+  `other` (in onda c'è altro), `black` (fade to black), `unavailable` (il server non raggiunge l'ATEM).
+  `text` è il testo da mostrare (es. `● IN ONDA`, `IN ONDA: CAM 3 Mario`). Inviato solo quando cambia.
+- **Timeout**: il server chiude una sessione senza ping né pacchetti da più di 5 s (controllo ogni secondo).
   Il client considera persa la connessione se non riceve nulla per 10 s, oppure se `welcome` non arriva entro 10 s.
 - Coda di uscita di 64 messaggi per sessione: un client che resta indietro viene disconnesso.
 

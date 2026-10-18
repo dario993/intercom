@@ -18,6 +18,7 @@ const pw = "pw"
 // testStore: channels 1 Regia, 2 Luci.
 // anna(10): talk+listen on 1 and 2, allCall, privateCall. bruno(11): talk+listen on 1.
 // carla(12): listen-only on 2. dario(13): disabled.
+// Tally enabled: anna on ATEM input 1, bruno on input 2.
 func testStore(t *testing.T) *config.Store {
 	t.Helper()
 	hash, err := config.HashPassword(pw)
@@ -27,14 +28,15 @@ func testStore(t *testing.T) *config.Store {
 	c := config.Default()
 	c.Channels = []config.Channel{{ID: 1, Name: "Regia"}, {ID: 2, Name: "Luci"}}
 	c.Users = []config.User{
-		{ID: 10, Name: "anna", PasswordHash: hash, Enabled: true, AllCall: true, PrivateCall: true,
+		{ID: 10, Name: "anna", PasswordHash: hash, Enabled: true, AllCall: true, PrivateCall: true, TallyInput: 1,
 			Channels: []config.Assignment{{ChannelID: 1, Talk: true, Listen: true}, {ChannelID: 2, Talk: true, Listen: true}}},
-		{ID: 11, Name: "bruno", PasswordHash: hash, Enabled: true,
+		{ID: 11, Name: "bruno", PasswordHash: hash, Enabled: true, TallyInput: 2,
 			Channels: []config.Assignment{{ChannelID: 1, Talk: true, Listen: true}}},
 		{ID: 12, Name: "carla", PasswordHash: hash, Enabled: true,
 			Channels: []config.Assignment{{ChannelID: 2, Talk: false, Listen: true}}},
 		{ID: 13, Name: "dario", PasswordHash: hash, Enabled: false},
 	}
+	c.Settings.Tally = config.TallySettings{Enabled: true, Interface: "atem", Host: "127.0.0.1"}
 	c.NextID = 100
 	path := filepath.Join(t.TempDir(), "c.json")
 	if err := config.Save(path, c); err != nil {

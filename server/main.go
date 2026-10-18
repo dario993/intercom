@@ -13,6 +13,7 @@ import (
 	"intercom/internal/config"
 	"intercom/internal/discovery"
 	"intercom/internal/hub"
+	"intercom/internal/tally"
 	"intercom/internal/web"
 )
 
@@ -36,10 +37,13 @@ func main() {
 	h.SendUDP = func(a *net.UDPAddr, b []byte) { udp.WriteToUDP(b, a) }
 	go func() { log.Fatalf("UDP: %v", readLoop(udp, h.HandleUDP)) }()
 	go func() {
-		for range time.Tick(2 * time.Second) {
-			h.Reap(10 * time.Second)
+		for range time.Tick(time.Second) {
+			h.Reap(5 * time.Second)
 		}
 	}()
+
+	tc := &tally.Client{OnChange: h.SetTally}
+	tc.Configure(st.Tally.Enabled, st.Tally.Host)
 
 	var ann discovery.Announcer
 	if err := ann.Announce(st.ServerName, st.HTTPPort, st.UDPPort); err != nil {
