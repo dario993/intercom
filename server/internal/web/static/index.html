@@ -82,6 +82,22 @@
       <p class="hint">Le porte cambiano al prossimo riavvio del server.</p>
       <button>Salva</button> <span id="s-msg"></span>
     </form>
+    <form id="tally-form">
+      <h3>Tally</h3>
+      <label class="check"><input id="t-enabled" type="checkbox"> Tally abilitato</label>
+      <label>Interfaccia Tally
+        <select id="t-interface"><option value="atem">Blackmagic ATEM</option></select>
+      </label>
+      <label>Indirizzo IP del mixer <input id="t-host" placeholder="192.168.1.240"></label>
+      <p class="hint">Porta UDP 9910 (fissa per l'ATEM).</p>
+      <p><span class="dot" id="t-dot"></span><span id="t-status"></span></p>
+      <button>Salva</button> <span id="t-msg"></span>
+      <h4>Assegnazione ID Tally</h4>
+      <table>
+        <thead><tr><th>Utente</th><th>Ingresso ATEM</th><th>Ora</th></tr></thead>
+        <tbody id="t-users"></tbody>
+      </table>
+    </form>
     <form id="password-form">
       <h3>Password amministratore</h3>
       <input id="p-new" type="password" minlength="4" required autocomplete="new-password">

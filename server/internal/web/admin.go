@@ -3,6 +3,7 @@ package web
 import (
 	"crypto/rand"
 	"encoding/hex"
+	"net"
 	"net/http"
 	"slices"
 	"strings"
@@ -146,12 +147,14 @@ type publicUser struct {
 	Channels    []config.Assignment `json:"channels"`
 	AllCall     bool                `json:"allCall"`
 	PrivateCall bool                `json:"privateCall"`
+	TallyInput  uint16              `json:"tallyInput"`
 }
 
 type publicConfig struct {
-	Settings publicSettings   `json:"settings"`
-	Channels []config.Channel `json:"channels"`
-	Users    []publicUser     `json:"users"`
+	Settings publicSettings       `json:"settings"`
+	Tally    config.TallySettings `json:"tally"`
+	Channels []config.Channel     `json:"channels"`
+	Users    []publicUser         `json:"users"`
 }
 
 // getConfig returns the configuration without any password hash.
@@ -159,9 +162,10 @@ func (s *Server) getConfig(w http.ResponseWriter, r *http.Request) {
 	out := publicConfig{Channels: []config.Channel{}, Users: []publicUser{}}
 	s.Store.View(func(c *config.Config) {
 		out.Settings = publicSettings{c.Settings.ServerName, c.Settings.HTTPPort, c.Settings.UDPPort}
+		out.Tally = c.Settings.Tally
 		out.Channels = append(out.Channels, c.Channels...)
 		for _, u := range c.Users {
-			out.Users = append(out.Users, publicUser{u.ID, u.Name, u.Enabled, append([]config.Assignment{}, u.Channels...), u.AllCall, u.PrivateCall})
+			out.Users = append(out.Users, publicUser{u.ID, u.Name, u.Enabled, append([]config.Assignment{}, u.Channels...), u.AllCall, u.PrivateCall, u.TallyInput})
 		}
 	})
 	writeJSON(w, http.StatusOK, out)
@@ -420,4 +424,60 @@ func (s *Server) kick(w http.ResponseWriter, r *http.Request) {
 	}
 	s.Hub.Kick(id, "admin")
 	writeOK(w)
+}
+
+func (s *Server) getTally(w http.ResponseWriter, r *http.Request) {
+	writeJSON(w, http.StatusOK, s.Hub.Tally())
+}
+
+func (s *Server) putTally(w http.ResponseWriter, r *http.Request) {
+	var in config.TallySettings
+	if err := readJSON(r, &in); err != nil {
+		writeErr(w, err)
+		return
+	}
+	in.Host = strings.TrimSpace(in.Host)
+	switch {
+	case in.Interface != "atem":
+		writeErr(w, bad("interfaccia non supportata"))
+		return
+	case in.Host != "" && net.ParseIP(in.Host) == nil:
+		writeErr(w, bad("indirizzo IP non valido"))
+		return
+	case in.Enabled && in.Host == "":
+		writeErr(w, bad("inserisci l'indirizzo IP del mixer"))
+		return
+	}
+	if err := s.Store.Update(func(c *config.Config) error { c.Settings.Tally = in; return nil }); err != nil {
+		writeErr(w, err)
+		return
+	}
+	s.Hub.ConfigChanged()
+	if s.OnTally != nil {
+		s.OnTally(in)
+	}
+	writeOK(w)
+}
+
+func (s *Server) assignTally(w http.ResponseWriter, r *http.Request) {
+	id, err := pathID(r)
+	if err != nil {
+		writeErr(w, err)
+		return
+	}
+	var in struct {
+		Input uint16 `json:"input"`
+	}
+	if err := readJSON(r, &in); err != nil {
+		writeErr(w, err)
+		return
+	}
+	s.update(w, func(c *config.Config) error {
+		u := c.UserByID(id)
+		if u == nil {
+			return errNotFound
+		}
+		u.TallyInput = in.Input
+		return nil
+	})
 }

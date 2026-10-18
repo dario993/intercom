@@ -21,7 +21,8 @@ var staticFiles embed.FS
 type Server struct {
 	Store      *config.Store
 	Hub        *hub.Hub
-	OnSettings func(config.Settings) // called after the settings are saved
+	OnSettings func(config.Settings)      // called after the settings are saved
+	OnTally    func(config.TallySettings) // called after the tally settings are saved
 
 	mu     sync.Mutex
 	tokens map[string]bool // admin session cookies; lost on restart
@@ -52,6 +53,9 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("DELETE /api/users/{id}", s.auth(s.deleteUser))
 	mux.HandleFunc("GET /api/live", s.auth(s.live))
 	mux.HandleFunc("POST /api/kick/{id}", s.auth(s.kick))
+	mux.HandleFunc("GET /api/tally", s.auth(s.getTally))
+	mux.HandleFunc("PUT /api/tally", s.auth(s.putTally))
+	mux.HandleFunc("PUT /api/tally/users/{id}", s.auth(s.assignTally))
 	return mux
 }
 

@@ -65,6 +65,7 @@ function showTab(name) {
   for (const s of document.querySelectorAll('section[id^=tab-]')) s.hidden = s.id !== 'tab-' + name;
   for (const b of document.querySelectorAll('nav button')) b.classList.toggle('active', b.dataset.tab === name);
   refreshLive();
+  refreshTally();
 }
 for (const b of document.querySelectorAll('nav button')) b.onclick = () => showTab(b.dataset.tab);
 $('logout').onclick = async () => { await api('POST', 'logout'); showAuth(false); };
@@ -238,7 +239,67 @@ function renderSettings() {
   $('s-name').value = s.serverName;
   $('s-http').value = s.httpPort;
   $('s-udp').value = s.udpPort;
+  const t = cfg.tally;
+  $('t-enabled').checked = t.enabled;
+  $('t-interface').value = t.interface || 'atem';
+  $('t-host').value = t.host;
+  renderTally();
 }
+
+// --- tally, refreshed every second while the settings tab is visible ---
+let atem = { connected: false, inputs: [], program: [], preview: [] };
+
+function renderTally() {
+  const t = cfg.tally;
+  $('t-dot').className = 'dot ' + (t.enabled && atem.connected ? 'on' : t.enabled ? 'off' : '');
+  $('t-status').textContent = !t.enabled ? 'Disattivato'
+    : atem.connected ? 'Connesso · ' + atem.model : 'Non raggiungibile';
+  // Without the switcher, offer plain numbers 1–8.
+  const inputs = atem.connected
+    ? (atem.inputs || []).filter((i) => i.external).map((i) => ({ id: i.id, label: i.id + ' · ' + i.name }))
+    : [1, 2, 3, 4, 5, 6, 7, 8].map((id) => ({ id, label: String(id) }));
+  const focused = document.activeElement && document.activeElement.dataset.tally;
+  $('t-users').innerHTML = cfg.users.map((u) => {
+    const opts = [{ id: 0, label: '— nessuno —' }, ...inputs];
+    if (u.tallyInput && !opts.some((o) => o.id === u.tallyInput)) opts.push({ id: u.tallyInput, label: String(u.tallyInput) });
+    const now = !u.tallyInput || !atem.connected ? ''
+      : (atem.program || []).includes(u.tallyInput) ? '<span class="badge pgm">IN ONDA</span>'
+      : (atem.preview || []).includes(u.tallyInput) ? '<span class="badge pvw">PREVIEW</span>' : '';
+    return `<tr>
+      <td>${esc(u.name)}</td>
+      <td><select data-tally="${u.id}">${opts.map((o) => `<option value="${o.id}" ${o.id === (u.tallyInput || 0) ? 'selected' : ''}>${esc(o.label)}</option>`).join('')}</select></td>
+      <td>${now}</td>
+    </tr>`;
+  }).join('');
+  if (focused) $('t-users').querySelector(`[data-tally="${focused}"]`)?.focus();
+}
+
+async function refreshTally() {
+  if ($('app').hidden || $('tab-settings').hidden) return;
+  const s = await api('GET', 'tally').catch(() => null);
+  if (!s) return;
+  atem = s;
+  // Don't rebuild the selects while one is open.
+  if (!(document.activeElement && document.activeElement.dataset.tally)) renderTally();
+}
+setInterval(refreshTally, 1000);
+
+$('t-users').onchange = async (e) => {
+  const id = e.target.dataset.tally;
+  if (!id) return;
+  await guard(() => api('PUT', 'tally/users/' + id, { input: +e.target.value }));
+  e.target.blur();
+  await loadConfig();
+};
+
+$('tally-form').onsubmit = async (e) => {
+  e.preventDefault();
+  const ok = await guard(() => api('PUT', 'tally', {
+    enabled: $('t-enabled').checked, interface: $('t-interface').value, host: $('t-host').value,
+  }));
+  $('t-msg').textContent = ok ? 'Salvato' : '';
+  await loadConfig();
+};
 
 $('settings-form').onsubmit = async (e) => {
   e.preventDefault();

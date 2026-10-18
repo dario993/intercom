@@ -14,6 +14,8 @@ table { width: 100%; border-collapse: collapse; margin-top: 12px; }
 th, td { text-align: left; padding: 8px; border-bottom: 1px solid var(--line); }
 th { color: var(--muted); font-weight: 500; }
 input, button { font: inherit; color: var(--text); background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 7px 10px; }
+select { font: inherit; color: var(--text); background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 7px 10px; }
+label select { display: block; margin-top: 4px; }
 input[type=color] { padding: 2px; width: 44px; height: 34px; }
 input[type=checkbox] { width: 18px; height: 18px; }
 button { cursor: pointer; }
@@ -25,7 +27,11 @@ label input:not([type=checkbox]) { display: block; width: 100%; margin-top: 4px;
 label.check { display: flex; gap: 8px; align-items: center; }
 .row { display: flex; gap: 8px; align-items: center; justify-content: flex-end; }
 #channel-form { justify-content: flex-start; }
-#password-form { margin-top: 32px; }
+#password-form, #tally-form { margin-top: 32px; }
+.dot.off { background: var(--err); }
+.badge { color: #fff; font-weight: 700; font-size: 12px; padding: 2px 7px; border-radius: 4px; }
+.badge.pgm { background: #e5484d; }
+.badge.pvw { background: #46a758; }
 .dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: var(--muted); margin-right: 8px; }
 .dot.on { background: var(--ok); }
 .err { color: var(--err); min-height: 1.4em; }

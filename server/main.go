@@ -19,6 +19,7 @@ import (
 
 func main() {
 	cfgPath := flag.String("config", "intercom-config.json", "percorso del file di configurazione")
+	atemPort := flag.Int("atem-port", 9910, "porta UDP dell'ATEM (solo per prove con il finto ATEM)")
 	flag.Parse()
 
 	store, err := config.Open(*cfgPath)
@@ -42,7 +43,7 @@ func main() {
 		}
 	}()
 
-	tc := &tally.Client{OnChange: h.SetTally}
+	tc := &tally.Client{OnChange: h.SetTally, Port: *atemPort}
 	tc.Configure(st.Tally.Enabled, st.Tally.Host)
 
 	var ann discovery.Announcer
@@ -52,6 +53,7 @@ func main() {
 	defer ann.Close()
 
 	srv := web.New(store, h)
+	srv.OnTally = func(t config.TallySettings) { tc.Configure(t.Enabled, t.Host) }
 	srv.OnSettings = func(s config.Settings) {
 		// Ports only change on restart, so keep announcing the ones in use.
 		if err := ann.Announce(s.ServerName, st.HTTPPort, st.UDPPort); err != nil {

@@ -56,9 +56,15 @@ func (c *Client) Configure(enabled bool, host string) {
 	go func() {
 		defer close(done)
 		addr := net.JoinHostPort(host, strconv.Itoa(port))
+		quiet := false // log an outage once, not every retry
 		for {
-			if err := c.session(ctx, addr, silence); err != nil && ctx.Err() == nil {
+			connected, err := c.session(ctx, addr, silence)
+			if connected {
+				quiet = false
+			}
+			if err != nil && ctx.Err() == nil && !quiet {
 				log.Printf("tally: ATEM %s non raggiungibile: %v", addr, err)
+				quiet = true
 			}
 			c.publish(Snapshot{})
 			select {
@@ -87,15 +93,16 @@ func (c *Client) publish(s Snapshot) {
 	}
 }
 
-// session runs one connection until silence, an error, or ctx ends.
-func (c *Client) session(ctx context.Context, addr string, silence time.Duration) error {
+// session runs one connection until silence, an error, or ctx ends; connected reports
+// whether the switcher completed its state dump.
+func (c *Client) session(ctx context.Context, addr string, silence time.Duration) (connected bool, err error) {
 	raddr, err := net.ResolveUDPAddr("udp", addr)
 	if err != nil {
-		return err
+		return false, err
 	}
 	conn, err := net.DialUDP("udp", nil, raddr)
 	if err != nil {
-		return err
+		return false, err
 	}
 	defer conn.Close()
 	ended := make(chan struct{})
@@ -110,7 +117,7 @@ func (c *Client) session(ctx context.Context, addr string, silence time.Duration
 
 	session := uint16(rand.IntN(0x7fff) + 1)
 	if _, err := conn.Write(helloPacket(session)); err != nil {
-		return err
+		return false, err
 	}
 	var cur Snapshot
 	ready := false
@@ -119,10 +126,10 @@ func (c *Client) session(ctx context.Context, addr string, silence time.Duration
 		conn.SetReadDeadline(time.Now().Add(silence))
 		n, err := conn.Read(buf)
 		if errors.Is(err, os.ErrDeadlineExceeded) {
-			return errors.New("nessuna risposta")
+			return ready, errors.New("nessuna risposta")
 		}
 		if err != nil {
-			return err
+			return ready, err
 		}
 		h, ok := parseHeader(buf[:n])
 		if !ok {

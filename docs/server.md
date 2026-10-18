@@ -11,8 +11,10 @@ Modulo `intercom` (`server/go.mod`). Dipendenze: `coder/websocket`, `grandcat/ze
 | `internal/hub` | Sessioni, permessi, broadcast di `users` e `talking`, inoltro UDP (`hub.go`); decisione dei destinatari (`route.go`) |
 | `internal/proto` | Formato dei messaggi JSON e dei pacchetti UDP |
 | `internal/web` | Router HTTP (`server.go`), WebSocket dei client (`ws.go`), API admin (`admin.go`), pagina in `static/` |
+| `internal/tally` | Client ATEM (UDP 9910, sola lettura) con riconnessione, calcolo della fascia per utente, finto ATEM |
 | `internal/discovery` | Annuncio mDNS `_intercom._tcp`, TXT `udp=<porta>` `name=<nome>` |
 | `cmd/testclient` | Client da riga di comando per provare il server senza telefono |
+| `cmd/fakeatem` | Finto mixer ATEM per provare il tally senza hardware (comandi `pgm`, `pvw`, `mix`, `ftb`) |
 
 ## Configurazione
 
@@ -21,12 +23,13 @@ Se il file non esiste, si parte dai valori predefiniti. Il file è escluso da gi
 
 ```json
 {
-  "settings": { "serverName": "Intercom", "httpPort": 8080, "udpPort": 8081, "adminHash": "<bcrypt>" },
+  "settings": { "serverName": "Intercom", "httpPort": 8080, "udpPort": 8081, "adminHash": "<bcrypt>",
+                "tally": { "enabled": true, "interface": "atem", "host": "192.168.1.240" } },
   "channels": [{ "id": 1, "name": "Regia", "color": "#e8a33d" }],
   "users": [{
     "id": 2, "name": "anna", "passwordHash": "<bcrypt>", "enabled": true,
     "channels": [{ "channelId": 1, "talk": true, "listen": true }],
-    "allCall": false, "privateCall": true
+    "allCall": false, "privateCall": true, "tallyInput": 3
   }],
   "nextId": 3
 }
@@ -37,6 +40,16 @@ Se il file non esiste, si parte dai valori predefiniti. Il file è escluso da gi
 - Utenti e canali condividono un unico contatore di id (`nextId`); gli id liberati non vengono riusati.
 - Le password di utenti e admin sono salvate con bcrypt. Il nome utente non distingue maiuscole e minuscole.
 - Il cambio delle porte vale solo dopo il riavvio. Il server annuncia sempre le porte effettivamente in uso.
+- `tallyInput` è l'id della sorgente ATEM assegnata all'utente (assente = nessuna fascia tally sul telefono).
+- Il flag `-atem-port` cambia la porta dell'ATEM, solo per provare con il finto ATEM su un computer dove la 9910 è occupata.
+
+## Tally (`internal/tally`)
+
+- Il server si collega all'ATEM come client UDP (porta 9910), in sola lettura: handshake, ACK dei pacchetti
+  affidabili, lettura di `_pin` (modello), `InPr` (nomi ingressi), `TlSr` (tally program/preview per sorgente),
+  `PrgI`, `FtbS`. Lo stato è valido dopo `InCm`. Nessun pacchetto per 5 s = ATEM non raggiungibile, nuovo tentativo ogni secondo.
+- Ogni cambio arriva all'hub (`SetTally`), che calcola la fascia per ogni sessione (`tally.ForUser`) e la invia solo se cambiata.
+- Nella fascia "in onda: …" contano solo gli ingressi esterni (camere); se in onda non ce n'è nessuno, il nome della sorgente sul program.
 
 ## Sessioni (`internal/hub`)
 
@@ -65,6 +78,9 @@ Autenticazione con cookie di sessione HttpOnly. I token stanno in memoria, quind
 | `POST /api/users`, `PUT/DELETE /api/users/{id}` | sì | crea, modifica ed elimina utenti |
 | `GET /api/live` | sì | panoramica in tempo reale: online, chi parla e dove |
 | `POST /api/kick/{id}` | sì | disconnette un utente |
+| `GET /api/tally` | sì | stato ATEM in tempo reale: connesso, modello, ingressi, program, preview, nero |
+| `PUT /api/tally` | sì | impostazioni tally `{enabled, interface, host}` (host = IP) |
+| `PUT /api/tally/users/{id}` | sì | assegna l'ingresso ATEM `{input}` a un utente (0 = nessuno) |
 
 La pagina admin è HTML e JavaScript senza framework, incorporata nel binario con `embed`.
 
