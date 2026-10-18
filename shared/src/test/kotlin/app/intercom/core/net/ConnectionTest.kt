@@ -143,6 +143,21 @@ class ConnectionTest {
     }
 
     @Test
+    fun silentServerIsNoticedWithinThreeSecondsByDefault() {
+        server.enqueue(upgrade({ welcome }))
+        server.start()
+        val rec = Recorder()
+        conn = Connection("127.0.0.1", server.port, "anna", "pw", "test", rec).also { it.start() }
+
+        assertEquals(ConnState.Connecting, rec.states.poll(3, SECONDS))
+        assertEquals(ConnState.Online, rec.states.poll(3, SECONDS))
+        val t0 = System.nanoTime()
+        assertEquals(ConnState.Reconnecting(1), rec.states.poll(5, SECONDS))
+        val ms = (System.nanoTime() - t0) / 1_000_000
+        assertTrue("noticed after $ms ms", ms in 2000..3000)
+    }
+
+    @Test
     fun kickIsFinal() {
         server.enqueue(upgrade({ welcome }))
         server.start()

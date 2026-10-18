@@ -39,6 +39,14 @@ class MessagesTest {
     }
 
     @Test
+    fun parsesTally() {
+        assertEquals(
+            ServerMessage.Tally("program", "● IN ONDA"),
+            parseServerMessage("""{"type":"tally","state":"program","text":"● IN ONDA"}"""),
+        )
+    }
+
+    @Test
     fun garbageAndUnknownTypesAreIgnored() {
         assertNull(parseServerMessage("not json"))
         assertNull(parseServerMessage("""{"type":"future"}"""))

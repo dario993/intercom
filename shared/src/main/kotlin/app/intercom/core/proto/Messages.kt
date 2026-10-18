@@ -32,6 +32,8 @@ sealed interface ServerMessage {
     data class Kicked(val reason: String) : ServerMessage
     data class Error(val code: String, val message: String) : ServerMessage
     data object Pong : ServerMessage
+    /** Tally banner already resolved by the server; state "off" = no banner. */
+    data class Tally(val state: String, val text: String) : ServerMessage
 }
 
 /** Parses one control message; malformed JSON and unknown types give null. */
@@ -55,6 +57,7 @@ fun parseServerMessage(text: String): ServerMessage? = try {
         "kicked" -> ServerMessage.Kicked(o.optString("reason"))
         "error" -> ServerMessage.Error(o.optString("code"), o.optString("message"))
         "pong" -> ServerMessage.Pong
+        "tally" -> ServerMessage.Tally(o.optString("state", "off"), o.optString("text"))
         else -> null
     }
 } catch (e: JSONException) {

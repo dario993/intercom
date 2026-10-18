@@ -54,9 +54,10 @@ class Connection(
     private val device: String,
     private val listener: Listener,
     /** No message from the server for this long while logged in = link lost (the server pongs every ping). */
-    private val silenceMs: Long = 10_000,
+    private val silenceMs: Long = 2_500,
     /** Connected but no welcome after this long (wrong port, stuck server) = attempt failed. */
     private val handshakeMs: Long = 10_000,
+    private val pingMs: Long = 1_000,
 ) {
     interface Listener {
         fun onState(state: ConnState)
@@ -80,7 +81,8 @@ class Connection(
 
     fun start() {
         listener.onState(ConnState.Connecting)
-        timer.scheduleWithFixedDelay({ checkSilence(); send(ClientMessages.ping()) }, 3, 3, TimeUnit.SECONDS)
+        timer.scheduleWithFixedDelay({ send(ClientMessages.ping()) }, pingMs, pingMs, TimeUnit.MILLISECONDS)
+        timer.scheduleWithFixedDelay(::checkSilence, 250, 250, TimeUnit.MILLISECONDS)
         timer.scheduleWithFixedDelay({ sendUdp(KIND_KEEPALIVE, ByteArray(0)) }, 5, 5, TimeUnit.SECONDS)
         connect()
     }
