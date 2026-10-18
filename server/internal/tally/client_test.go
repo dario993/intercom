@@ -103,3 +103,36 @@ func TestConfigureSwitchesHost(t *testing.T) {
 	c.Configure(false, "")
 	r.wait(t, time.Second, "off", func(s Snapshot) bool { return !s.Connected })
 }
+
+func TestClientAppliesPacketsInOrderOnly(t *testing.T) {
+	f := newFake(t, "127.0.0.1:0")
+	r := &recorder{}
+	c := newClient(t, r, f.Port())
+	c.Silence = 2 * time.Second
+	c.Configure(true, "127.0.0.1")
+	r.wait(t, 2*time.Second, "connected", func(s Snapshot) bool { return s.Connected })
+	f.pausePings()
+	time.Sleep(100 * time.Millisecond)
+
+	onAir := func(id uint16) []byte { return command("TlSr", []byte{0, 1, byte(id >> 8), byte(id), 0x01}) }
+	program := func() []uint16 { return c.Snapshot().Program }
+	settle := func() { time.Sleep(150 * time.Millisecond) }
+	n := f.nextSeq() // the next id the client expects
+
+	f.sendRaw(n+1, onAir(5)) // n is lost: n+1 must wait for it
+	settle()
+	if !slices.Equal(program(), []uint16{1}) || f.lastAck() != n-1 {
+		t.Fatalf("after gap: program %v, last ack %d (want [1], %d)", program(), f.lastAck(), n-1)
+	}
+	f.sendRaw(n, onAir(4))   // the lost one, resent
+	f.sendRaw(n+1, onAir(5)) // and the next, resent
+	settle()
+	if !slices.Equal(program(), []uint16{5}) || f.lastAck() != n+1 {
+		t.Fatalf("after resend: program %v, last ack %d (want [5], %d)", program(), f.lastAck(), n+1)
+	}
+	f.sendRaw(n, onAir(4)) // late duplicate must not roll the state back
+	settle()
+	if !slices.Equal(program(), []uint16{5}) || f.lastAck() != n+1 {
+		t.Errorf("after duplicate: program %v, last ack %d", program(), f.lastAck())
+	}
+}

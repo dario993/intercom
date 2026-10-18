@@ -19,6 +19,8 @@ type FakeATEM struct {
 	session  uint16
 	seq      uint16
 	received int
+	acks     []uint16 // ack ids received, for tests
+	paused   bool     // no pings, for tests
 }
 
 func NewFakeATEM(addr string) (*FakeATEM, error) {
@@ -78,6 +80,9 @@ func (f *FakeATEM) serve() {
 		}
 		f.mu.Lock()
 		f.received++
+		if h.flags&flagAck != 0 {
+			f.acks = append(f.acks, h.ackID)
+		}
 		if h.flags&flagHello != 0 {
 			f.client, f.session, f.seq = addr, 0x8001, 0
 			f.conn.WriteToUDP(packet(flagHello, h.session, 0, []byte{0x02, 0, 0, 0, 0, 0, 0, 0}), addr)
@@ -108,7 +113,9 @@ func (f *FakeATEM) ping() {
 			return
 		case <-t.C:
 			f.mu.Lock()
-			f.sendLocked(nil)
+			if !f.paused {
+				f.sendLocked(nil)
+			}
 			f.mu.Unlock()
 		}
 	}
@@ -147,4 +154,30 @@ func (f *FakeATEM) sendLocked(payload []byte) {
 	}
 	f.seq++
 	f.conn.WriteToUDP(packet(flagAckRequest, f.session, f.seq, payload), f.client)
+}
+
+// sendRaw sends payload as reliable packet seq without touching the sequence counter (tests only).
+func (f *FakeATEM) sendRaw(seq uint16, payload []byte) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.conn.WriteToUDP(packet(flagAckRequest, f.session, seq, payload), f.client)
+}
+
+// nextSeq returns the id the next reliable packet would carry (tests only).
+func (f *FakeATEM) nextSeq() uint16 {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	return f.seq + 1
+}
+
+func (f *FakeATEM) pausePings() {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.paused = true
+}
+
+func (f *FakeATEM) lastAck() uint16 {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	return f.acks[len(f.acks)-1]
 }

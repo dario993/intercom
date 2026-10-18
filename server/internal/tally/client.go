@@ -15,7 +15,6 @@ import (
 )
 
 // Client keeps one read-only connection to an ATEM and publishes every change of its state.
-// ponytail: no retransmission handling; on a LAN loss is rare and the next TlSr repairs the state.
 type Client struct {
 	OnChange func(Snapshot) // called outside any Client lock, from the connection goroutine
 	Port     int            // 0 = 9910
@@ -120,6 +119,7 @@ func (c *Client) session(ctx context.Context, addr string, silence time.Duration
 		return false, err
 	}
 	var cur Snapshot
+	var last uint16 // id of the last reliable packet applied
 	ready := false
 	buf := make([]byte, 2048)
 	for {
@@ -136,12 +136,22 @@ func (c *Client) session(ctx context.Context, addr string, silence time.Duration
 			continue
 		}
 		session = h.session
-		if h.flags&(flagHello|flagAckRequest) != 0 {
-			conn.Write(ackPacket(session, h.remoteID))
-		}
 		if h.flags&flagHello != 0 {
+			last = h.remoteID
+			conn.Write(ackPacket(session, last))
 			continue
 		}
+		if h.flags&flagAckRequest == 0 {
+			continue
+		}
+		// Apply only the next packet in sequence; ack the last one applied so the switcher
+		// resends anything after a gap. Duplicates and out-of-order packets are dropped.
+		if h.remoteID != (last+1)&0x7fff {
+			conn.Write(ackPacket(session, last))
+			continue
+		}
+		last = h.remoteID
+		conn.Write(ackPacket(session, last))
 		if cur.apply(buf[headerLen:h.length]) {
 			ready = true
 		}
