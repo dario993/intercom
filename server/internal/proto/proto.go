@@ -94,6 +94,17 @@ const (
 	MsgKicked  = "kicked"
 	MsgError   = "error"
 	MsgPong    = "pong"
+	MsgTally   = "tally"
+)
+
+// Tally states, already resolved for the receiving user.
+const (
+	TallyOff         = "off" // no banner: tally disabled or no input assigned
+	TallyProgram     = "program"
+	TallyPreview     = "preview"
+	TallyOther       = "other"
+	TallyBlack       = "black"
+	TallyUnavailable = "unavailable"
 )
 
 const (
@@ -189,4 +200,10 @@ type ErrorMsg struct {
 
 type Pong struct {
 	Type string `json:"type"`
+}
+
+type Tally struct {
+	Type  string `json:"type"`
+	State string `json:"state"`
+	Text  string `json:"text"`
 }

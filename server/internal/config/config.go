@@ -32,13 +32,21 @@ type User struct {
 	Channels     []Assignment `json:"channels"`
 	AllCall      bool         `json:"allCall"`
 	PrivateCall  bool         `json:"privateCall"`
+	TallyInput   uint16       `json:"tallyInput,omitempty"` // ATEM source id; 0 = none
 }
 
 type Settings struct {
-	ServerName string `json:"serverName"`
-	HTTPPort   int    `json:"httpPort"`
-	UDPPort    int    `json:"udpPort"`
-	AdminHash  string `json:"adminHash"`
+	ServerName string        `json:"serverName"`
+	HTTPPort   int           `json:"httpPort"`
+	UDPPort    int           `json:"udpPort"`
+	AdminHash  string        `json:"adminHash"`
+	Tally      TallySettings `json:"tally"`
+}
+
+type TallySettings struct {
+	Enabled   bool   `json:"enabled"`
+	Interface string `json:"interface"` // only "atem" for now
+	Host      string `json:"host"`
 }
 
 type Config struct {
@@ -50,7 +58,7 @@ type Config struct {
 
 func Default() *Config {
 	return &Config{
-		Settings: Settings{ServerName: "Intercom", HTTPPort: 8080, UDPPort: 8081},
+		Settings: Settings{ServerName: "Intercom", HTTPPort: 8080, UDPPort: 8081, Tally: TallySettings{Interface: "atem"}},
 		NextID:   1,
 	}
 }
