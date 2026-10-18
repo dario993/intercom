@@ -58,6 +58,9 @@ import app.intercom.android.IntercomController
 import app.intercom.android.UiState
 import app.intercom.core.net.ConnState
 import app.intercom.core.proto.ChannelInfo
+import app.intercom.core.tally.TallyBanner
+import app.intercom.core.tally.TallyStyle
+import app.intercom.core.tally.tallyBanner
 import app.intercom.core.talk.TalkButton
 import kotlinx.coroutines.delay
 import java.time.LocalTime
@@ -69,6 +72,7 @@ private enum class Sheet { MIXER, USERS }
 fun MainScreen(s: UiState, c: IntercomController, onOpenAppSettings: () -> Unit) {
     var sheet by remember { mutableStateOf<Sheet?>(null) }
     Column(Modifier.fillMaxSize().safeDrawingPadding()) {
+        tallyBanner(s.tally, s.conn == ConnState.Online)?.let { TallyBar(it) }
         Header(s, onLogout = c::logout)
         s.incoming?.let { Banner(it, OnAirRed) }
         if (s.conn is ConnState.Reconnecting) Banner("Riconnessione al server…", Amber)
@@ -129,6 +133,21 @@ private fun Header(s: UiState, onLogout: () -> Unit) {
         IconButton(onClick = onLogout, enabled = !s.locked) {
             Icon(Icons.AutoMirrored.Filled.Logout, contentDescription = "Esci")
         }
+    }
+}
+
+/** Fixed-height tally strip: only its color and text change, so the screen below never moves. */
+@Composable
+private fun TallyBar(b: TallyBanner) {
+    val (bg, fg, size) = when (b.style) {
+        TallyStyle.ON_AIR -> Triple(OnAirRed, Color.White, 20.sp)
+        TallyStyle.PREVIEW -> Triple(VoxGreen, Color.White, 20.sp)
+        TallyStyle.OTHER -> Triple(Color.Black, Color.White, 16.sp)
+        TallyStyle.GREY -> Triple(Color(0xFF2A2D33), Color(0xFFCFD3D8), 16.sp)
+        TallyStyle.DISCONNECTED -> Triple(Color.Black, OnAirRed, 20.sp)
+    }
+    Box(Modifier.fillMaxWidth().height(44.dp).background(bg).padding(horizontal = 12.dp), contentAlignment = Alignment.Center) {
+        Text(b.text, color = fg, fontSize = size, fontWeight = FontWeight.ExtraBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
     }
 }
 

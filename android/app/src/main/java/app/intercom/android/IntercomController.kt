@@ -62,6 +62,8 @@ data class UiState(
     val voxThresholdDb: Float = -45f,
     val output: String = OUTPUT_AUTO,
     val keepScreenOn: Boolean = true,
+    /** Last tally banner from the server; null = none. Kept while reconnecting so the UI can show DISCONNESSO. */
+    val tally: ServerMessage.Tally? = null,
 )
 
 /** App-wide intercom session: owns the connection and the audio engine, exposes [state] to the UI. */
@@ -139,7 +141,7 @@ class IntercomController(private val app: Context) {
         update {
             it.copy(
                 activity = emptyMap(), incoming = null, buttonMode = TalkButton.Mode.IDLE, onAir = false,
-                holdingAll = false, holdingUser = null, locked = false,
+                holdingAll = false, holdingUser = null, locked = false, tally = null,
             )
         }
     }
@@ -197,6 +199,7 @@ class IntercomController(private val app: Context) {
                 sendState()
             }
             is ServerMessage.Users -> update { it.copy(users = m.users) }
+            is ServerMessage.Tally -> update { it.copy(tally = m.takeUnless { t -> t.state == "off" }) }
             is ServerMessage.Talking -> {
                 talking.apply(m)
                 update { it.copy(activity = talking.activity(), incoming = talking.banner()) }

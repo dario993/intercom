@@ -48,7 +48,7 @@ In `shared/src/main/kotlin/app/intercom/core/`:
 - **audio-out**: ogni 20 ms legge un frame dal jitter buffer di ogni voce, decodifica, mixa e scrive su `AudioTrack`.
   Il ritmo lo dà la scrittura bloccante.
 - **udp-rx** e thread di OkHttp: ricezione di rete.
-- **timer** di `Connection`: ping ogni 3 s, keepalive UDP ogni 5 s, controllo del silenzio, timeout del primo `welcome`.
+- **timer** di `Connection`: ping ogni secondo, keepalive UDP ogni 5 s, controllo del silenzio ogni 250 ms (perdita dopo 2,5 s), timeout del primo `welcome`.
 
 `IntercomController.lock` protegge `TalkButton` e `TxDecider`, usati sia dal thread UI sia da audio-in.
 `connGen` scarta le callback di una connessione già chiusa.
@@ -73,6 +73,7 @@ Così gli altri vedono "sta parlando" solo quando c'è davvero audio.
 - Errore definitivo con credenziali errate, utente disabilitato o espulsione. Con `bad_credentials` la password salvata viene cancellata.
 - Alla riconnessione i canali Parla e Ascolta vengono ripristinati, ma il microfono agganciato resta **chiuso**.
 - Logout esplicito: cancella la password salvata, così al prossimo avvio non c'è il login automatico.
+- Il collegamento perso si rileva in circa 2,5 s: nessun messaggio dal server (che risponde a ogni ping).
 
 ## Audio
 
@@ -88,6 +89,9 @@ Così gli altri vedono "sta parlando" solo quando c'è davvero audio.
 ## Interfaccia
 
 - **Connessione**: server trovati via mDNS, IP e porta manuali, credenziali, "ricorda credenziali", pulsante Annulla durante il collegamento.
+- **Fascia tally**: in cima alla schermata principale, altezza fissa 44 dp, solo se il server la manda (tally abilitato e
+  ingresso ATEM assegnato all'utente). Rossa `● IN ONDA`, verde `PREVIEW`, nera `IN ONDA: …`, grigia `NERO` o
+  `TALLY NON DISPONIBILE`; durante la riconnessione nera con `DISCONNESSO` in rosso. La logica è in `shared/.../tally/TallyBanner.kt`.
 - **Principale**: intestazione con stato e logout, lista dei canali, uno per riga (interruttori Parla e Ascolta, chi sta parlando),
   pulsante PARLA, barra inferiore con chiamata a tutti, lucchetto, mixer, utenti e impostazioni.
 - **Utenti**: stato di ciascun utente; con `privateCall` ogni riga ha un tasto PARLA da tenere premuto per la chiamata privata (attivo solo se l'utente è online).
