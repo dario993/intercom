@@ -66,7 +66,9 @@ Una modifica dell'admin si applica subito: i client ricevono `config` e le trasm
 | — | Client desktop Windows per la regia | in corso |
 | 2 | Gruppi di canali | futura |
 | 3 | Program feed (L/R in cuffia), I/O verso la scheda audio del server (mix lato server) | futura |
-| 4 | Tally e GPIO | **esclusa** |
+| 4 | Tally da Blackmagic ATEM sull'app Android | **fatta** (da collaudare col mixer vero) |
+| — | Avviso vocale "connesso" / "disconnesso" sul telefono | prossima |
+| — | GPIO | esclusa |
 | 5 | Cifratura AES-256-GCM del traffico, backup della configurazione | futura |
 | 6 | App iPhone (Swift) | futura |
 

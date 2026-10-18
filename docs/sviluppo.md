@@ -25,6 +25,31 @@ go run ./cmd/testclient -user anna  -pass pw -channel 1 -talk 2s -listen 1s
 Il primo client deve ricevere circa 100 pacchetti da anna. I due utenti devono già esistere
 e avere il canale 1 assegnato.
 
+### Tally senza mixer
+
+```bash
+cd server
+go run ./cmd/fakeatem -addr 127.0.0.1:19910     # finto ATEM: CAM 1–8 e MP1
+go run . -atem-port 19910                       # in un altro terminale
+```
+
+Nella pagina admin, Impostazioni → Tally: abilitato, IP `127.0.0.1`. Poi nel terminale del finto ATEM:
+`pgm 3` (program), `pvw 1` (preview), `mix 1 2` (due camere in onda), `ftb` (nero sì/no), `quit` (mixer sparito).
+`-atem-port` serve solo se la 9910 è già occupata sul computer (per esempio da Unity Intercom); col mixer vero non si usa.
+
+### Collaudo sul posto con l'ATEM vero
+
+Il protocollo ATEM è ricostruito da progetti open source e non è mai stato provato su questo mixer. Al primo uso:
+
+1. IP dell'ATEM nella pagina admin → stato "Connesso · ATEM Production Studio 4K" e nomi degli ingressi corretti.
+2. Cambio di camera su program e preview → fascia rossa/verde sui telefoni assegnati entro un attimo.
+3. Dissolvenza tra due camere → per circa un secondo `IN ONDA: CAM A + CAM B`, poi solo la nuova.
+4. Fade to black → fascia grigia `NERO` solo a schermo del tutto nero.
+5. Logo o grafica da media player sopra una camera → non deve comparire nella fascia nera.
+6. Cavo di rete dell'ATEM staccato → `TALLY NON DISPONIBILE` entro ~5 s; ricollegato → torna da solo.
+7. ATEM Software Control aperto insieme al server → entrambi funzionano.
+8. Wi-Fi del telefono spento → `DISCONNESSO` in rosso entro ~3 s.
+
 ## App Android
 
 ```bash
