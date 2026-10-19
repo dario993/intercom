@@ -22,7 +22,13 @@ func main() {
 	}
 	defer f.Close()
 	fmt.Printf("Finto ATEM su UDP %d. Ingressi CAM 1–8 e MP1 (3010).\n", f.Port())
-	fmt.Println("Comandi: pgm N · pvw N · mix A B · ftb · quit")
+	help := `Comandi (al posto di N, A, B scrivi il numero della camera):
+  pgm 3     mette in onda CAM 3
+  pvw 4     mette CAM 4 in preview
+  mix 1 2   CAM 1 e CAM 2 in onda insieme (dissolvenza)
+  ftb       nero on/off
+  quit      esce`
+	fmt.Println(help)
 
 	sc := bufio.NewScanner(os.Stdin)
 	for fmt.Print("> "); sc.Scan(); fmt.Print("> ") {
@@ -51,7 +57,9 @@ func main() {
 		case fields[0] == "ftb":
 			f.Set(func(s *tally.Snapshot) { s.Black = !s.Black })
 		default:
-			fmt.Println("Comando non valido.")
+			fmt.Println("Comando non valido.\n" + help)
+			continue
 		}
+		fmt.Println("OK")
 	}
 }
