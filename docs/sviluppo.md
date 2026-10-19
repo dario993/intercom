@@ -30,12 +30,12 @@ e avere il canale 1 assegnato.
 ```bash
 cd server
 go run ./cmd/fakeatem -addr 127.0.0.1:19910     # finto ATEM: CAM 1–8 e MP1
-go run . -atem-port 19910                       # in un altro terminale
+go run .                                        # in un altro terminale
 ```
 
-Nella pagina admin, Impostazioni → Tally: abilitato, IP `127.0.0.1`. Poi nel terminale del finto ATEM:
+Nella pagina admin, Impostazioni → Tally: abilitato, indirizzo `127.0.0.1:19910`. Poi nel terminale del finto ATEM:
 `pgm 3` (program), `pvw 1` (preview), `mix 1 2` (due camere in onda), `ftb` (nero sì/no), `quit` (mixer sparito).
-`-atem-port` serve solo se la 9910 è già occupata sul computer (per esempio da Unity Intercom); col mixer vero non si usa.
+La porta 19910 serve perché la 9910 può essere occupata sul computer (per esempio da Unity Intercom); col mixer vero basta l'IP.
 
 ### Collaudo sul posto con l'ATEM vero
 

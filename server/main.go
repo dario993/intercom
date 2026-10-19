@@ -19,7 +19,6 @@ import (
 
 func main() {
 	cfgPath := flag.String("config", "intercom-config.json", "percorso del file di configurazione")
-	atemPort := flag.Int("atem-port", 9910, "porta UDP dell'ATEM (solo per prove con il finto ATEM)")
 	flag.Parse()
 
 	store, err := config.Open(*cfgPath)
@@ -43,7 +42,7 @@ func main() {
 		}
 	}()
 
-	tc := &tally.Client{OnChange: h.SetTally, Port: *atemPort}
+	tc := &tally.Client{OnChange: h.SetTally}
 	tc.Configure(st.Tally.Enabled, st.Tally.Host)
 
 	var ann discovery.Announcer

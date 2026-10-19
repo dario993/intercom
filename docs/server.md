@@ -41,7 +41,7 @@ Se il file non esiste, si parte dai valori predefiniti. Il file è escluso da gi
 - Le password di utenti e admin sono salvate con bcrypt. Il nome utente non distingue maiuscole e minuscole.
 - Il cambio delle porte vale solo dopo il riavvio. Il server annuncia sempre le porte effettivamente in uso.
 - `tallyInput` è l'id della sorgente ATEM assegnata all'utente (assente = nessuna fascia tally sul telefono).
-- Il flag `-atem-port` cambia la porta dell'ATEM, solo per provare con il finto ATEM su un computer dove la 9910 è occupata.
+- L'indirizzo del mixer è `IP` (porta 9910) oppure `IP:porta`; la porta diversa serve solo per provare con il finto ATEM.
 
 ## Tally (`internal/tally`)
 

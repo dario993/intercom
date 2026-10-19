@@ -35,6 +35,7 @@ func TestPutTallyValidates(t *testing.T) {
 	srv, c, calls := tallyServer(t)
 	bad := []map[string]any{
 		{"enabled": true, "interface": "atem", "host": "non-un-ip"},
+		{"enabled": true, "interface": "atem", "host": "127.0.0.1:99999"},
 		{"enabled": true, "interface": "atem", "host": " "},
 		{"enabled": false, "interface": "vmix", "host": ""},
 	}
@@ -46,6 +47,10 @@ func TestPutTallyValidates(t *testing.T) {
 	if code, body := call(t, c, srv, "PUT", "/api/tally", map[string]any{"enabled": true, "interface": "atem", "host": " 192.168.1.240 "}); code != 200 {
 		t.Fatalf("valid = %d %s", code, body)
 	}
+	if code, body := call(t, c, srv, "PUT", "/api/tally", map[string]any{"enabled": true, "interface": "atem", "host": "127.0.0.1:19910"}); code != 200 {
+		t.Fatalf("with port = %d %s", code, body)
+	}
+	call(t, c, srv, "PUT", "/api/tally", map[string]any{"enabled": true, "interface": "atem", "host": " 192.168.1.240 "})
 	_, body := call(t, c, srv, "GET", "/api/config", nil)
 	var cfg struct{ Tally config.TallySettings }
 	json.Unmarshal([]byte(body), &cfg)
@@ -53,7 +58,7 @@ func TestPutTallyValidates(t *testing.T) {
 	if cfg.Tally != want {
 		t.Errorf("config tally = %+v", cfg.Tally)
 	}
-	if len(*calls) != 1 || (*calls)[0] != want {
+	if len(*calls) != 3 || (*calls)[2] != want {
 		t.Errorf("OnTally calls = %+v", *calls)
 	}
 }
@@ -61,6 +66,10 @@ func TestPutTallyValidates(t *testing.T) {
 func TestAssignTallyInput(t *testing.T) {
 	srv, c, _ := tallyServer(t)
 	call(t, c, srv, "POST", "/api/users", map[string]any{"name": "mario", "password": "pw12", "enabled": true})
+	if code, body := call(t, c, srv, "PUT", "/api/tally", map[string]any{"enabled": true, "interface": "atem", "host": "127.0.0.1:19910"}); code != 200 {
+		t.Fatalf("with port = %d %s", code, body)
+	}
+	call(t, c, srv, "PUT", "/api/tally", map[string]any{"enabled": true, "interface": "atem", "host": " 192.168.1.240 "})
 	_, body := call(t, c, srv, "GET", "/api/config", nil)
 	var cfg struct {
 		Users []struct {

@@ -3,12 +3,12 @@ package web
 import (
 	"crypto/rand"
 	"encoding/hex"
-	"net"
 	"net/http"
 	"slices"
 	"strings"
 
 	"intercom/internal/config"
+	"intercom/internal/tally"
 )
 
 const cookieName = "intercom_admin"
@@ -430,6 +430,8 @@ func (s *Server) getTally(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, s.Hub.Tally())
 }
 
+func hostOK(h string) bool { _, ok := tally.ParseHost(h, 9910); return ok }
+
 func (s *Server) putTally(w http.ResponseWriter, r *http.Request) {
 	var in config.TallySettings
 	if err := readJSON(r, &in); err != nil {
@@ -441,8 +443,8 @@ func (s *Server) putTally(w http.ResponseWriter, r *http.Request) {
 	case in.Interface != "atem":
 		writeErr(w, bad("interfaccia non supportata"))
 		return
-	case in.Host != "" && net.ParseIP(in.Host) == nil:
-		writeErr(w, bad("indirizzo IP non valido"))
+	case in.Host != "" && !hostOK(in.Host):
+		writeErr(w, bad("indirizzo non valido: scrivi IP oppure IP:porta"))
 		return
 	case in.Enabled && in.Host == "":
 		writeErr(w, bad("inserisci l'indirizzo IP del mixer"))

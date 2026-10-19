@@ -54,8 +54,8 @@ func (c *Client) Configure(enabled bool, host string) {
 	c.stop, c.done = cancel, done
 	go func() {
 		defer close(done)
-		addr := net.JoinHostPort(host, strconv.Itoa(port))
-		quiet := false // log an outage once, not every retry
+		addr, _ := ParseHost(host, port) // validated by the admin API
+		quiet := false                   // log an outage once, not every retry
 		for {
 			connected, err := c.session(ctx, addr, silence)
 			if connected {
@@ -73,6 +73,23 @@ func (c *Client) Configure(enabled bool, host string) {
 			}
 		}
 	}()
+}
+
+// ParseHost accepts "IP" or "IP:port" (port 1–65535) and returns the address to dial,
+// using defPort when none is given. Names are refused: the switcher is set by IP.
+func ParseHost(s string, defPort int) (string, bool) {
+	ip, port := s, defPort
+	if h, p, err := net.SplitHostPort(s); err == nil {
+		n, err := strconv.Atoi(p)
+		if err != nil || n < 1 || n > 0xffff {
+			return "", false
+		}
+		ip, port = h, n
+	}
+	if net.ParseIP(ip) == nil {
+		return "", false
+	}
+	return net.JoinHostPort(ip, strconv.Itoa(port)), true
 }
 
 func (c *Client) Snapshot() Snapshot {
