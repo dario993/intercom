@@ -21,8 +21,12 @@ import app.intercom.core.audio.Vox
 import app.intercom.core.audio.mix
 import app.intercom.core.proto.KIND_VOICE
 import app.intercom.core.proto.ServerPacket
+import java.util.concurrent.ArrayBlockingQueue
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.concurrent.thread
+
+// ponytail: fixed level, tune on site; becomes a slider in settings if people want to change it.
+private const val SIDETONE_GAIN = 0.3f
 
 /**
  * Capture: mic → VOX → (if [onFrame] says on air) Opus → [sendVoice], every 20 ms.
@@ -42,6 +46,10 @@ class AudioEngine(
     private val voices = ConcurrentHashMap<Int, Voice>()
     private val threads = mutableListOf<Thread>()
     @Volatile private var running = false
+    /** Own voice frames while on air, played back quietly in the headset. Small cap: drops instead of piling up delay. */
+    private val sidetone = ArrayBlockingQueue<ShortArray>(3)
+    /** Off on the loudspeaker: the mic would pick it up and howl. */
+    @Volatile private var sidetoneOn = false
 
     private class Voice {
         var decoder = OpusDecoder()
@@ -63,6 +71,7 @@ class AudioEngine(
         threads.clear()
         voices.values.forEach { it.decoder.close() }
         voices.clear()
+        sidetone.clear()
         if (Build.VERSION.SDK_INT >= 31) am.clearCommunicationDevice() else @Suppress("DEPRECATION") { am.isSpeakerphoneOn = false }
         am.mode = AudioManager.MODE_NORMAL
     }
@@ -92,10 +101,13 @@ class AudioEngine(
                 else -> devs.firstOrNull { it.type in headsets }
             }
             if (pick != null) am.setCommunicationDevice(pick) else am.clearCommunicationDevice()
+            sidetoneOn = pick != null && pick.type in headsets
         } else {
             // ponytail: Android 10-11 only switch loudspeaker on/off; Bluetooth routing is left to the system there.
             @Suppress("DEPRECATION")
             am.isSpeakerphoneOn = output == OUTPUT_SPEAKER || (output == OUTPUT_AUTO && !am.isWiredHeadsetOn)
+            @Suppress("DEPRECATION")
+            sidetoneOn = !am.isSpeakerphoneOn
         }
     }
 
@@ -150,6 +162,11 @@ class AudioEngine(
                         gains += gain(v.channelId)
                     }
                 }
+                val own = sidetone.poll()
+                if (own != null && sidetoneOn) {
+                    pcm += own
+                    gains += SIDETONE_GAIN
+                }
                 mix(pcm, gains, out)
                 track.write(out, 0, out.size) // blocks once the buffer is full: paces the loop at 20 ms
             }
@@ -197,7 +214,10 @@ class AudioEngine(
                     if (r < 0) return // recorder died; finally cleans up
                     n += r
                 }
-                if (onFrame(vox.process(frame))) encoder.encode(frame).forEach(sendVoice)
+                if (onFrame(vox.process(frame))) {
+                    encoder.encode(frame).forEach(sendVoice)
+                    sidetone.offer(frame.copyOf())
+                }
             }
         } finally {
             runCatching { rec.stop() }

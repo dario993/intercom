@@ -85,6 +85,8 @@ Così gli altri vedono "sta parlando" solo quando c'è davvero audio.
 - Volume: generale × canale. Chiamate a tutti e private usano solo il volume generale.
 - Uscita: `auto` (cuffia o Bluetooth se presenti, altrimenti altoparlante), `headset`, `speaker`.
   Su Android 10-11 si commuta solo l'altoparlante.
+- Ritorno voce: mentre sei in onda senti la tua voce bassa (guadagno 0,3) in cuffia o Bluetooth, con circa
+  60–100 ms di ritardo. Mai sull'altoparlante, per evitare il fischio.
 - Senza permesso microfono, o se la cattura si interrompe, l'app funziona in **solo ascolto**.
   Al ritorno in primo piano (`onResume`) riprova.
 
