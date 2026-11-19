@@ -74,6 +74,8 @@ Così gli altri vedono "sta parlando" solo quando c'è davvero audio.
 - Alla riconnessione i canali Parla e Ascolta vengono ripristinati, ma il microfono agganciato resta **chiuso**.
 - Logout esplicito: cancella la password salvata, così al prossimo avvio non c'è il login automatico.
 - Il collegamento perso si rileva in circa 2,5 s: nessun messaggio dal server (che risponde a ogni ping).
+- Avvisi vocali (`res/raw/`): "disconnected" quando un collegamento attivo cade o viene chiuso dal server,
+  "connected" quando la riconnessione riesce. Primo login e logout restano muti. Escono sulla stessa uscita della voce.
 
 ## Audio
 

@@ -4,6 +4,9 @@ import android.Manifest
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.media.AudioAttributes
+import android.media.AudioManager
+import android.media.MediaPlayer
 import android.os.Build
 import android.os.Handler
 import android.os.Looper
@@ -147,6 +150,9 @@ class IntercomController(private val app: Context) {
     }
 
     private fun onConnState(s: ConnState) {
+        val prev = _state.value.conn
+        if (prev == ConnState.Online && (s is ConnState.Reconnecting || s is ConnState.Failed)) cue(R.raw.disconnected)
+        if (prev is ConnState.Reconnecting && s == ConnState.Online) cue(R.raw.connected)
         when (s) {
             is ConnState.Failed -> {
                 if (s.clearPassword) prefs.password = null
@@ -166,6 +172,19 @@ class IntercomController(private val app: Context) {
                 }
             }
             else -> update { it.copy(conn = s) }
+        }
+    }
+
+    /** Spoken cue on the voice route (headset/Bluetooth when the engine picked one). */
+    private fun cue(res: Int) {
+        val attrs = AudioAttributes.Builder()
+            .setUsage(AudioAttributes.USAGE_VOICE_COMMUNICATION)
+            .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
+            .build()
+        val am = app.getSystemService(AudioManager::class.java)
+        MediaPlayer.create(app, res, attrs, am.generateAudioSessionId())?.apply {
+            setOnCompletionListener { it.release() }
+            start()
         }
     }
 
