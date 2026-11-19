@@ -56,6 +56,8 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("GET /api/tally", s.auth(s.getTally))
 	mux.HandleFunc("PUT /api/tally", s.auth(s.putTally))
 	mux.HandleFunc("PUT /api/tally/users/{id}", s.auth(s.assignTally))
+	mux.HandleFunc("GET /api/export", s.auth(s.exportConfig))
+	mux.HandleFunc("POST /api/import", s.auth(s.importConfig))
 	return mux
 }
 

@@ -103,6 +103,14 @@
       <input id="p-new" type="password" minlength="4" required autocomplete="new-password">
       <button>Cambia password</button> <span id="p-msg"></span>
     </form>
+    <form id="backup-form">
+      <h3>Esporta / importa configurazione</h3>
+      <p class="hint">Il file contiene canali, utenti con le loro password, tally e impostazioni: serve per spostare il server su un altro PC.
+        Importando, la configurazione attuale viene sostituita. Porte diverse valgono dal prossimo riavvio.</p>
+      <button type="button" id="b-export">Esporta</button>
+      <input id="b-file" type="file" accept=".json,application/json" hidden>
+      <button type="button" id="b-import">Importa…</button> <span id="b-msg"></span>
+    </form>
   </section>
 </div>
 <script src="app.js"></script>

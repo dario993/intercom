@@ -317,6 +317,19 @@ $('password-form').onsubmit = async (e) => {
   $('p-new').value = '';
 };
 
+$('b-export').onclick = () => { location.href = '/api/export'; };
+$('b-import').onclick = () => $('b-file').click();
+$('b-file').onchange = async (e) => {
+  const file = e.target.files[0];
+  e.target.value = '';
+  if (!file || !confirm('Sostituire tutta la configurazione attuale con "' + file.name + '"?')) return;
+  let data;
+  try { data = JSON.parse(await file.text()); } catch { alert('Il file non è un JSON valido'); return; }
+  const ok = await guard(() => api('POST', 'import', data));
+  $('b-msg').textContent = ok ? 'Configurazione importata' : '';
+  await loadConfig();
+};
+
 (async () => {
   const st = await api('GET', 'status');
   if (st.loggedIn) await showApp();

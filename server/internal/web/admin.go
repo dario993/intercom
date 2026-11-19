@@ -3,6 +3,7 @@ package web
 import (
 	"crypto/rand"
 	"encoding/hex"
+	"encoding/json"
 	"net/http"
 	"slices"
 	"strings"
@@ -482,4 +483,96 @@ func (s *Server) assignTally(w http.ResponseWriter, r *http.Request) {
 		u.TallyInput = in.Input
 		return nil
 	})
+}
+
+// exportConfig downloads the whole configuration, password hashes included, to move it to another machine.
+func (s *Server) exportConfig(w http.ResponseWriter, r *http.Request) {
+	var b []byte
+	var err error
+	s.Store.View(func(c *config.Config) { b, err = json.MarshalIndent(c, "", "  ") })
+	if err != nil {
+		writeErr(w, err)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Content-Disposition", `attachment; filename="intercom-config.json"`)
+	w.Write(b)
+}
+
+// importConfig replaces the whole configuration with an exported one.
+func (s *Server) importConfig(w http.ResponseWriter, r *http.Request) {
+	in := config.Default()
+	if err := readJSON(r, in); err != nil {
+		writeErr(w, err)
+		return
+	}
+	if err := validImport(in); err != nil {
+		writeErr(w, err)
+		return
+	}
+	var saved config.Settings
+	err := s.Store.Update(func(c *config.Config) error {
+		if in.Settings.AdminHash == "" {
+			in.Settings.AdminHash = c.Settings.AdminHash
+		}
+		*c = *in
+		saved = c.Settings
+		return nil
+	})
+	if err != nil {
+		writeErr(w, err)
+		return
+	}
+	s.Hub.ConfigChanged()
+	if s.OnSettings != nil {
+		s.OnSettings(saved)
+	}
+	if s.OnTally != nil {
+		s.OnTally(saved.Tally)
+	}
+	writeOK(w)
+}
+
+// validImport rejects files the admin API could never have produced, and fixes NextID.
+func validImport(c *config.Config) error {
+	if strings.TrimSpace(c.Settings.ServerName) == "" || !validPort(c.Settings.HTTPPort) || !validPort(c.Settings.UDPPort) {
+		return bad("file non valido: impostazioni del server")
+	}
+	if c.Settings.Tally.Interface != "atem" || (c.Settings.Tally.Host != "" && !hostOK(c.Settings.Tally.Host)) {
+		return bad("file non valido: impostazioni tally")
+	}
+	ids := map[uint16]bool{}
+	var maxID uint16
+	useID := func(id uint16) bool {
+		if id == 0 || id == 0xFFFF || ids[id] {
+			return false
+		}
+		ids[id] = true
+		maxID = max(maxID, id)
+		return true
+	}
+	for _, ch := range c.Channels {
+		if !useID(ch.ID) || strings.TrimSpace(ch.Name) == "" {
+			return bad("file non valido: canale " + ch.Name)
+		}
+	}
+	names := map[string]bool{}
+	for _, u := range c.Users {
+		key := strings.ToLower(strings.TrimSpace(u.Name))
+		if !useID(u.ID) || key == "" || names[key] || u.PasswordHash == "" {
+			return bad("file non valido: utente " + u.Name)
+		}
+		names[key] = true
+		seen := map[uint16]bool{}
+		for _, a := range u.Channels {
+			if c.ChannelByID(a.ChannelID) == nil || seen[a.ChannelID] {
+				return bad("file non valido: canali dell'utente " + u.Name)
+			}
+			seen[a.ChannelID] = true
+		}
+	}
+	if c.NextID <= maxID {
+		c.NextID = maxID + 1
+	}
+	return nil
 }

@@ -83,6 +83,8 @@ Autenticazione con cookie di sessione HttpOnly. I token stanno in memoria, quind
 | `GET /api/tally` | sì | stato ATEM in tempo reale: connesso, modello, ingressi, program, preview, nero |
 | `PUT /api/tally` | sì | impostazioni tally `{enabled, interface, host}` (host = IP) |
 | `PUT /api/tally/users/{id}` | sì | assegna l'ingresso ATEM `{input}` a un utente (0 = nessuno) |
+| `GET /api/export` | sì | scarica la configurazione completa (hash delle password inclusi) come `intercom-config.json` |
+| `POST /api/import` | sì | sostituisce tutta la configurazione con un file esportato; la convalida e poi riapplica a client, mDNS e tally. Se il file non ha `adminHash` resta la password admin attuale |
 
 La pagina admin è HTML e JavaScript senza framework, incorporata nel binario con `embed`.
 

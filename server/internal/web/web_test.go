@@ -221,3 +221,43 @@ func TestServesAdminPage(t *testing.T) {
 		t.Errorf("index.html missing title")
 	}
 }
+
+func TestExportImport(t *testing.T) {
+	srv, c, store := adminServer(t)
+	call(t, c, srv, "POST", "/api/channels", map[string]string{"name": "Regia"})
+	call(t, c, srv, "POST", "/api/users", map[string]any{"name": "cam1", "password": "pw1234", "enabled": true})
+	code, exported := call(t, c, srv, "GET", "/api/export", nil)
+	if code != 200 || !strings.Contains(exported, "passwordHash") {
+		t.Fatalf("export = %d %s", code, exported)
+	}
+
+	// A fresh server takes the file and keeps users, channels and the admin password.
+	srv2, c2, store2 := adminServer(t)
+	var cfg config.Config
+	json.Unmarshal([]byte(exported), &cfg)
+	if code, body := call(t, c2, srv2, "POST", "/api/import", cfg); code != 200 {
+		t.Fatalf("import = %d %s", code, body)
+	}
+	store2.View(func(got *config.Config) {
+		store.View(func(want *config.Config) {
+			u := got.UserByName("cam1")
+			if u == nil || len(got.Channels) != 1 || got.Settings.AdminHash != want.Settings.AdminHash || got.NextID != want.NextID {
+				t.Fatalf("imported config = %+v", got)
+			}
+			if !config.CheckPassword(u.PasswordHash, "pw1234") {
+				t.Fatal("user password lost")
+			}
+		})
+	})
+
+	// A user pointing at a missing channel is rejected and nothing changes.
+	cfg.Users[0].Channels = []config.Assignment{{ChannelID: 999}}
+	if code, _ := call(t, c2, srv2, "POST", "/api/import", cfg); code != 400 {
+		t.Fatalf("bad import = %d, want 400", code)
+	}
+	store2.View(func(got *config.Config) {
+		if len(got.Users[0].Channels) != 0 {
+			t.Fatal("rejected import was applied")
+		}
+	})
+}
