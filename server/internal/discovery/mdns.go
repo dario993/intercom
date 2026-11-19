@@ -2,6 +2,7 @@
 package discovery
 
 import (
+	"net"
 	"strconv"
 	"sync"
 
@@ -15,8 +16,8 @@ type Announcer struct {
 	srv *zeroconf.Server
 }
 
-// Announce (re)publishes the service; calling it again replaces the previous announcement.
-func (a *Announcer) Announce(name string, httpPort, udpPort int) error {
+// Announce (re)publishes the service on ifaces (nil = all); calling it again replaces the previous announcement.
+func (a *Announcer) Announce(name string, httpPort, udpPort int, ifaces []net.Interface) error {
 	a.mu.Lock()
 	defer a.mu.Unlock()
 	if a.srv != nil {
@@ -24,7 +25,7 @@ func (a *Announcer) Announce(name string, httpPort, udpPort int) error {
 		a.srv = nil
 	}
 	txt := []string{"udp=" + strconv.Itoa(udpPort), "name=" + name}
-	srv, err := zeroconf.Register(name, Service, "local.", httpPort, txt, nil)
+	srv, err := zeroconf.Register(name, Service, "local.", httpPort, txt, ifaces)
 	if err != nil {
 		return err
 	}

@@ -27,3 +27,25 @@ func TestReadLoopSurvivesTransientErrors(t *testing.T) {
 		t.Errorf("err = %v, handled = %d; want ErrClosed after 1 packet", err, n)
 	}
 }
+
+func TestParseChoice(t *testing.T) {
+	addrs := []lanAddr{{ip: net.IPv4(192, 168, 1, 10).To4()}, {ip: net.IPv4(10, 8, 0, 2).To4()}}
+	for _, c := range []struct {
+		in   string
+		want string // "" = all
+		ok   bool
+	}{
+		{"0", "", true}, {"", "", true}, {"Tutti", "", true},
+		{"1", "192.168.1.10", true}, {" 2 ", "10.8.0.2", true}, {"10.8.0.2", "10.8.0.2", true},
+		{"3", "", false}, {"abc", "", false}, {"1.2.3.4", "", false},
+	} {
+		a, ok := parseChoice(c.in, addrs)
+		got := ""
+		if a != nil {
+			got = a.ip.String()
+		}
+		if ok != c.ok || got != c.want {
+			t.Errorf("parseChoice(%q) = %q, %v; want %q, %v", c.in, got, ok, c.want, c.ok)
+		}
+	}
+}

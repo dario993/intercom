@@ -10,6 +10,7 @@ Apri l'indirizzo stampato all'avvio (es. `http://192.168.1.10:8080`), crea la pa
 amministratore, poi canali e utenti.
 
 Opzioni: `-config <file>` (predefinito `intercom-config.json` nella cartella corrente).
+`-ip <indirizzo>` sceglie l'IP su cui ascoltare (`-ip tutti` = tutti). Senza `-ip`, se il PC ha più IP, all'avvio compare un menu; senza risposta entro 15 s, oppure senza console (Docker, servizio), il server ascolta su tutti. Con un IP scelto, anche l'annuncio mDNS esce solo da quella scheda e `localhost` non risponde più.
 Porte predefinite: 8080 TCP (pagina web e client), 8081 UDP (audio).
 
 ## Build

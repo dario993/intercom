@@ -19,6 +19,8 @@ Modulo `intercom` (`server/go.mod`). Dipendenze: `coder/websocket`, `grandcat/ze
 ## Configurazione
 
 File JSON: `intercom-config.json` nella cartella corrente, oppure il percorso passato con `-config <file>`.
+
+Indirizzo di ascolto: `-ip <indirizzo>` sceglie l'IP su cui ascoltare (`-ip tutti` = tutti). Senza `-ip`, se il PC ha più IP, all'avvio compare un menu; senza risposta entro 15 s, oppure senza console (Docker, servizio), il server ascolta su tutti. Con un IP scelto, anche l'annuncio mDNS esce solo da quella scheda e `localhost` non risponde più.
 Se il file non esiste, si parte dai valori predefiniti. Il file è escluso da git.
 
 ```json

@@ -106,3 +106,4 @@ Non serve l'Android SDK: `desktop/` include solo `shared/`.
 | Connesso ma non si sente nessuno | UDP 8081 bloccato dal firewall, oppure nessun canale in Ascolta in comune con chi parla |
 | Il server non compare nella lista | La rete blocca il multicast mDNS (comune su reti ospiti e aziendali): usa l'IP manuale |
 | "porta HTTP/UDP non disponibile" all'avvio del server | Un'altra istanza è già in esecuzione: `lsof -nP -i :8080` |
+| Il telefono non trova il server su un PC con più schede di rete (VPN, macchine virtuali) | Riavvia il server e scegli dal menu l'IP della rete dei telefoni, oppure usa `-ip <indirizzo>` |
