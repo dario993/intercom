@@ -95,7 +95,7 @@ Così gli altri vedono "sta parlando" solo quando c'è davvero audio.
 - **Principale**: intestazione con stato e logout, lista dei canali, uno per riga (interruttori Parla e Ascolta, chi sta parlando),
   pulsante PARLA, barra inferiore con chiamata a tutti, lucchetto, mixer, utenti e impostazioni.
 - **Utenti**: stato di ciascun utente; con `privateCall` ogni riga ha un tasto PARLA da tenere premuto per la chiamata privata (attivo solo se l'utente è online).
-- **Lucchetto**: blocca gli interruttori dei canali e la barra; PARLA resta attivo.
+- **Lucchetto**: blocca gli interruttori dei canali, la barra e PARLA (un microfono già agganciato resta aperto fino allo sblocco).
 - **Impostazioni**: modalità del doppio tocco (VOX o sempre aperto), soglia VOX, uscita audio, schermo sempre acceso.
 - Tema scuro ad alto contrasto, grafica originale: non copiare layout, colori o asset di Unity Intercom.
 

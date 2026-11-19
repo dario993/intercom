@@ -205,12 +205,19 @@ private fun Toggle(label: String, on: Boolean, color: Color, enabled: Boolean, o
 @Composable
 private fun TalkButtonView(s: UiState, onDown: () -> Unit, onUp: () -> Unit) {
     val enabled = s.talk.isNotEmpty() && s.micAllowed
+    val usable = enabled && !s.locked
     val latchName = if (s.openMic) "microfono aperto" else "VOX"
     data class Look(val bg: Color, val title: String, val sub: String)
     val look = when {
         !enabled -> Look(
             MaterialTheme.colorScheme.surfaceVariant, "PARLA",
             if (!s.micAllowed) "microfono non consentito" else "attiva PARLA su almeno un canale",
+        )
+        // a mic latched before locking stays open (and visible) until unlock
+        s.locked && s.buttonMode == TalkButton.Mode.IDLE -> Look(MaterialTheme.colorScheme.surfaceVariant, "PARLA", "bloccato")
+        s.locked && s.buttonMode == TalkButton.Mode.LATCHED && s.openMic -> Look(OnAirRed, "MICROFONO APERTO", "bloccato")
+        s.locked && s.buttonMode == TalkButton.Mode.LATCHED -> Look(
+            if (s.onAir) VoxGreen else VoxGreen.copy(alpha = 0.45f), "VOX", "bloccato",
         )
         s.buttonMode == TalkButton.Mode.HOLD -> Look(OnAirRed, "IN ONDA", "rilascia per chiudere")
         s.buttonMode == TalkButton.Mode.LATCHED && s.openMic -> Look(OnAirRed, "MICROFONO APERTO", "tocca per chiudere")
@@ -223,8 +230,8 @@ private fun TalkButtonView(s: UiState, onDown: () -> Unit, onUp: () -> Unit) {
     Box(
         Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 10.dp).height(128.dp)
             .clip(RoundedCornerShape(24.dp)).background(look.bg)
-            .pointerInput(enabled) {
-                if (!enabled) return@pointerInput
+            .pointerInput(usable) {
+                if (!usable) return@pointerInput
                 awaitEachGesture {
                     awaitFirstDown()
                     onDown()
@@ -238,8 +245,9 @@ private fun TalkButtonView(s: UiState, onDown: () -> Unit, onUp: () -> Unit) {
         contentAlignment = Alignment.Center,
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(look.title, fontSize = 34.sp, fontWeight = FontWeight.Black, color = if (enabled) Color.Black else Muted)
-            Text(look.sub, style = MaterialTheme.typography.bodySmall, color = if (enabled) Color.Black else Muted)
+            val fg = if (look.bg == MaterialTheme.colorScheme.surfaceVariant) Muted else Color.Black
+            Text(look.title, fontSize = 34.sp, fontWeight = FontWeight.Black, color = fg)
+            Text(look.sub, style = MaterialTheme.typography.bodySmall, color = fg)
         }
     }
 }
